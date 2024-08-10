@@ -1,0 +1,113 @@
+#include <iostream>
+#include <TFile.h>
+#include <TTree.h>
+#include <TH1D.h>
+#include <TCanvas.h>
+#include <TStyle.h>
+#include <limits>
+
+using namespace std;
+
+const char* basePath = getenv("WORKDIR");
+const char* dir = "histo";
+const char* rootFilePath = "data/pv_add_beamspot.root";
+
+void diff() {
+    gStyle->SetOptStat(111111);
+    string fullPath = string(basePath) + "/" + string(rootFilePath);
+    TFile *file = new TFile(fullPath.c_str());
+    TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
+
+    vector<double> *id_trk_pt = nullptr;
+    vector<float> *id_trk_z0 = nullptr;
+    vector<int> *vxp_type = nullptr;
+    vector<float> *vxp_z = nullptr;
+    Float_t beam_pos_z;
+
+    tree->SetBranchAddress("id_trk_pt", &id_trk_pt);
+    tree->SetBranchAddress("id_trk_z0" ,&id_trk_z0);
+    tree->SetBranchAddress("vxp_type", &vxp_type);
+    tree->SetBranchAddress("vxp_z", &vxp_z);
+    tree->SetBranchAddress("beamPosZ", &beam_pos_z);
+
+    tree->GetEntry(0);
+
+    int entries = tree->GetEntries();
+
+    float min_z0 = numeric_limits<float>::max();
+    float max_z0 = numeric_limits<float>::lowest();
+
+    for (int entry = 0; entry < entries; entry++) {
+        tree->GetEntry(entry);
+
+        for (size_t i = 0; i < id_trk_z0->size(); ++i) {
+            min_z0 = min(min_z0, id_trk_z0->at(i));
+            max_z0 = max(max_z0, id_trk_z0->at(i));
+        }
+    }
+
+    float range = max_z0 - min_z0;
+    float margin = 0.1 * range; // 10%のマージンを追加
+    min_z0 -= margin;
+    max_z0 += margin;
+
+    TH1D *h1 = new TH1D("h1", "before adjust beamspot", 128, -2, 9);
+    h1->SetFillColor(kBlue);
+    TH1D *h2 = new TH1D("h2", "after adjust beamspot", 128, -5, 5);
+    h2->SetFillColor(kBlue);
+
+    double max_diff = 0;
+    double min_diff = 0;
+
+    for (int entry = 0; entry < entries; entry++) {
+        tree->GetEntry(entry);
+
+        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", 256, min_z0, max_z0);
+
+        for (size_t i = 0; i < id_trk_pt->size(); ++i) {
+            tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
+        }
+
+        int maxBin = tempHist->GetMaximumBin();
+        double max_z0 = tempHist->GetXaxis()->GetBinCenter(maxBin);
+
+        delete tempHist;
+
+        float primary_vertex_z = 0;
+        for (size_t i = 0; i < vxp_z->size(); ++i) {
+            if (vxp_type->at(i) == 1) {
+                primary_vertex_z = vxp_z->at(i);
+                break;
+            }
+        }
+
+        double diff = max_z0 - primary_vertex_z;
+        int track_num = id_trk_pt->size();
+        if (track_num > 0) {
+            h1->Fill(diff);
+            h2->Fill(diff + static_cast<double>(beam_pos_z));
+        }
+
+        if (diff > max_diff) {
+            max_diff = diff;
+        }
+
+        if (diff < min_diff) {
+            min_diff = diff;
+        }
+    }
+
+    TCanvas *c1 = new TCanvas("c1", "", 800, 600);
+    h1->SetXTitle("difference [mm]");
+    h1->SetYTitle("number of events");
+    h1->Draw();
+
+    string outputPath = string(basePath) + "/output/" + string(dir) + "/diff.pdf";
+    c1->Print((outputPath + "(").c_str());
+
+    TCanvas *c2 = new TCanvas("c2", "", 800, 600);
+    h2->SetXTitle("difference [mm]");
+    h2->SetYTitle("number of events");
+    h2->Draw();
+    c2->Print((outputPath + ")").c_str());
+}
