@@ -97,17 +97,19 @@ void diff() {
         }
     }
 
-    TCanvas *c1 = new TCanvas("c1", "", 800, 600);
+    TCanvas *c1 = new TCanvas("c1", "", 1400, 600);
+    c1->Divide(2, 1);
+
+    c1->cd(1);
     h1->SetXTitle("difference [mm]");
     h1->SetYTitle("number of events");
     h1->Draw();
 
-    string outputPath = string(basePath) + "/output/" + string(dir) + "/diff.pdf";
-    c1->Print((outputPath + "(").c_str());
-
-    TCanvas *c2 = new TCanvas("c2", "", 800, 600);
+    c1->cd(2);
     h2->SetXTitle("difference [mm]");
     h2->SetYTitle("number of events");
     h2->Draw();
-    c2->Print((outputPath + ")").c_str());
+
+    string outputPath = string(basePath) + "/output/" + string(dir) + "/diff.pdf";
+    c1->Print(outputPath.c_str());
 }
