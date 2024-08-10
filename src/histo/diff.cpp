@@ -12,25 +12,21 @@ const char* basePath = getenv("WORKDIR");
 const char* dir = "histo";
 const char* rootFilePath = "data/pv_add_beamspot.root";
 
-void diff() {
-    gStyle->SetOptStat(111111);
-    string fullPath = string(basePath) + "/" + string(rootFilePath);
-    TFile *file = new TFile(fullPath.c_str());
-    TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
-
+void drawHist(TTree *tree, bool is_ftf, string outputPath) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
     vector<int> *vxp_type = nullptr;
     vector<float> *vxp_z = nullptr;
     Float_t beam_pos_z;
 
-    tree->SetBranchAddress("id_trk_pt", &id_trk_pt);
-    tree->SetBranchAddress("id_trk_z0" ,&id_trk_z0);
+    const char* ptBranch = is_ftf ? "ftf_id_trk_pt" : "id_trk_pt";
+    const char* z0Branch = is_ftf ? "ftf_id_trk_z0" : "id_trk_z0";
+
+    tree->SetBranchAddress(ptBranch, &id_trk_pt);
+    tree->SetBranchAddress(z0Branch ,&id_trk_z0);
     tree->SetBranchAddress("vxp_type", &vxp_type);
     tree->SetBranchAddress("vxp_z", &vxp_z);
     tree->SetBranchAddress("beamPosZ", &beam_pos_z);
-
-    tree->GetEntry(0);
 
     int entries = tree->GetEntries();
 
@@ -51,9 +47,12 @@ void diff() {
     min_z0 -= margin;
     max_z0 += margin;
 
-    TH1D *h1 = new TH1D("h1", "before adjust beamspot", 128, -2, 9);
+    const char* h1_title = is_ftf ? "before adjust beamspot (FTF)": "before adjust beamspot";
+    const char* h2_title = is_ftf ? "after adjust beamspot (FTF)": "after adjust beamspot";
+
+    TH1D *h1 = new TH1D("h1", h1_title, 128, -2, 9);
     h1->SetFillColor(kBlue);
-    TH1D *h2 = new TH1D("h2", "after adjust beamspot", 128, -5, 5);
+    TH1D *h2 = new TH1D("h2", h2_title, 128, -5, 5);
     h2->SetFillColor(kBlue);
 
     double max_diff = 0;
@@ -110,6 +109,18 @@ void diff() {
     h2->SetYTitle("number of events");
     h2->Draw();
 
-    string outputPath = string(basePath) + "/output/" + string(dir) + "/diff.pdf";
     c1->Print(outputPath.c_str());
+
+    delete h1;
+    delete h2;
+    delete c1;
+}
+
+void diff() {
+    gStyle->SetOptStat(111111);
+    string fullPath = string(basePath) + "/" + string(rootFilePath);
+    TFile *file = new TFile(fullPath.c_str());
+    TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
+    drawHist(tree, false, string(basePath) + "/output/" + string(dir) + "/diff.pdf(");
+    drawHist(tree, true, string(basePath) + "/output/" + string(dir) + "/diff.pdf)");
 }
