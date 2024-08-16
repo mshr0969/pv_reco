@@ -10,3 +10,6 @@ endif
 
 hadd_files:
 	hadd -f $(outputfile) $(inputdir)/*.root
+
+bin_width:
+	root -l 'src/efficiency/bin_width.cpp'
