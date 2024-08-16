@@ -122,6 +122,9 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
 
     int entries = tree->GetEntries();
 
+    float min_z0 = numeric_limits<float>::max();
+    float max_z0 = numeric_limits<float>::lowest();
+
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
 
@@ -140,10 +143,6 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
 
     TH1D *h1 = new TH1D("h1", h1_title, 64, -2, 2);
     h1->SetFillColor(kBlue);
-
-    double max_diff = 0;
-    double min_diff = 0;
-
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
 
