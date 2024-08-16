@@ -45,15 +45,10 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, bool 
         }
     }
 
-    float range = max_z0 - min_z0;
-    float margin = 0.1 * range; // 10%のマージンを追加
-    min_z0 -= margin;
-    max_z0 += margin;
-
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
 
-        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, min_z0, max_z0);
+        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
 
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
             tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
