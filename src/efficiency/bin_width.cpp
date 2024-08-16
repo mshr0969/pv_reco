@@ -172,5 +172,5 @@ void bin_width() {
     latex.SetTextFont(42); // 標準のフォントスタイルに戻す
     latex.DrawLatex(0.62, 0.2, "Simulation Internal");
 
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/roc.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/bin_width.pdf").c_str());
 }
