@@ -56,9 +56,6 @@ void drawHist_beamspot(TTree *tree, bool is_ftf, string outputPath) {
     TH1D *h2 = new TH1D("h2", h2_title, 128, -5, 5);
     h2->SetFillColor(kBlue);
 
-    double max_diff = 0;
-    double min_diff = 0;
-
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
 
@@ -86,14 +83,6 @@ void drawHist_beamspot(TTree *tree, bool is_ftf, string outputPath) {
         if (track_num > 0) {
             h1->Fill(diff);
             h2->Fill(diff + static_cast<double>(beam_pos_z));
-        }
-
-        if (diff > max_diff) {
-            max_diff = diff;
-        }
-
-        if (diff < min_diff) {
-            min_diff = diff;
         }
     }
 
