@@ -7,3 +7,6 @@ ifdef is_mc
 else
 	root -l 'src/histo/diff.cpp'
 endif
+
+hadd_files:
+	hadd -f $(outputfile) $(inputdir)/*.root
