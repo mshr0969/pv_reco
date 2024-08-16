@@ -174,14 +174,6 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
         if (track_num > 0) {
             h1->Fill(diff);
         }
-
-        if (diff > max_diff) {
-            max_diff = diff;
-        }
-
-        if (diff < min_diff) {
-            min_diff = diff;
-        }
     }
 
     TCanvas *c1 = new TCanvas("c1", "", 1400, 600);
