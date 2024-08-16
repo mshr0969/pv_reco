@@ -122,9 +122,6 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
 
     int entries = tree->GetEntries();
 
-    float min_z0 = numeric_limits<float>::max();
-    float max_z0 = numeric_limits<float>::lowest();
-
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
 
