@@ -147,13 +147,13 @@ void bin_width() {
         cout << "[offline] bin width: " << bin_width << ", efficiency: " << efficiency << endl;
     }
 
-    TCanvas *c1 = new TCanvas("c1", "", 850, 700);
+    TCanvas *c1 = new TCanvas("c1", "", 800, 600);
     g1->Draw("ALP");
     g2->Draw("LP same");
 
     TLegend *legend = new TLegend(0.6, 0.4, 0.8, 0.55);
-    legend->AddEntry(g1, "FTF", "l");
-    legend->AddEntry(g2, "Offline", "l");
+    legend->AddEntry(g1, "t#bar{t} (FTF)", "l");
+    legend->AddEntry(g2, "t#bar{t} (Offline)", "l");
     legend->SetBorderSize(0);
     legend->Draw();
 
@@ -162,10 +162,11 @@ void bin_width() {
     latex.SetNDC();
     latex.SetTextFont(72); // ATLASフォントスタイル
     latex.SetTextSize(0.04);
-    latex.DrawLatex(0.5, 0.2, "ATLAS");
+    latex.DrawLatex(0.5, 0.25, "ATLAS");
 
     latex.SetTextFont(42); // 標準のフォントスタイルに戻す
-    latex.DrawLatex(0.62, 0.2, "Simulation Internal");
+    latex.DrawLatex(0.62, 0.25, "Simulation Internal");
+    latex.DrawLatex(0.5, 0.2, "#sqrt{s} = 13.6 TeV");
 
     c1->Print((string(basePath) + "/output/" + string(dir) + "/bin_width.pdf").c_str());
 }
