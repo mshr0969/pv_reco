@@ -13,3 +13,6 @@ hadd_files:
 
 bin_width:
 	root -l 'src/efficiency/bin_width.cpp'
+
+bin_width_pu200:
+	root -l 'src/efficiency/bin_width_pu200.cpp'
