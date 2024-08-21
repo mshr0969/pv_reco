@@ -14,8 +14,8 @@ hadd_files:
 bin_width_run3:
 	root -l 'src/efficiency/bin_width/run3.cpp'
 
-bin_width_pu200:
-	root -l 'src/efficiency/bin_width/pu200.cpp'
-
 bin_width_pu0to200:
 	root -l 'src/efficiency/bin_width/pu0to200.cpp'
+
+save_txt:
+	root -l 'src/efficiency/save_txt.cpp'
