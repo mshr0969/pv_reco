@@ -15,7 +15,7 @@ const char* mcRootFilePath_pu140_zmumu = getenv("MC_DATA_DIR_PU140_Z_MUMU");
 const char* mcRootFilePath_pu0_zmumu = getenv("MC_DATA_DIR_PU0_Z_MUMU");
 const char* dataDir = "src/efficiency/data";
 
-tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, int bin_num) {
+tuple<vector<vector<double>>, vector<double>, double, int> pv_reco(TTree *tree, int bin_num) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
     vector<int> *vxp_type = nullptr;
@@ -30,21 +30,26 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, int b
     tree->SetBranchAddress("vxp_z", &vxp_z);
 
     int entries = tree->GetEntries();
-
-    float min_z0 = numeric_limits<float>::max();
-    float max_z0 = numeric_limits<float>::lowest();
+    int do_not_have_primary_vertex = 0;
 
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
 
-        for (size_t i = 0; i < id_trk_z0->size(); ++i) {
-            min_z0 = min(min_z0, id_trk_z0->at(i));
-            max_z0 = max(max_z0, id_trk_z0->at(i));
+        float primary_vertex_z = 0;
+        int num_primary_vertices = 0;
+        for (size_t i = 0; i < vxp_z->size(); ++i) {
+            if (vxp_type->at(i) == 1) {
+                primary_vertex_z = vxp_z->at(i);
+                num_primary_vertices++;
+                break;
+            }
         }
-    }
-
-    for (int entry = 0; entry < entries; entry++) {
-        tree->GetEntry(entry);
+        if (num_primary_vertices == 1) {
+            primary_vertexies.push_back(primary_vertex_z);
+        } else {
+            do_not_have_primary_vertex++;
+            continue;
+        }
 
         TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
 
@@ -59,24 +64,16 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, int b
         bin_width = bin_up_edge - bin_low_edge;
 
         delete tempHist;
-
-        float primary_vertex_z = 0;
-        for (size_t i = 0; i < vxp_z->size(); ++i) {
-            if (vxp_type->at(i) == 1) {
-                primary_vertex_z = vxp_z->at(i);
-                primary_vertexies.push_back(primary_vertex_z);
-                break;
-            }
-        }
     }
 
-    return make_tuple(reco_z0, primary_vertexies, bin_width);
+    return make_tuple(reco_z0, primary_vertexies, bin_width, do_not_have_primary_vertex);
 }
 
 void save_pu200() {
     vector<vector<double>> reco_z0;
     vector<double> primary_vertexies;
     double bin_width;
+    int do_not_have_pv;
 
     string outputDir = string(basePath)+ "/" + string(dataDir) + "/";
     ofstream outFile_ttbar(outputDir + "ttbar_efficiency.txt");
@@ -92,7 +89,7 @@ void save_pu200() {
     TFile *file = new TFile(fullPath.c_str());
     TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree, bin_num);
+        tie(reco_z0, primary_vertexies, bin_width, do_not_have_pv) = pv_reco(tree, bin_num);
 
         int true_count = 0;
         int false_count = 0;
@@ -108,7 +105,7 @@ void save_pu200() {
         double efficiency = static_cast<double>(true_count) / (true_count + false_count);
         outFile_ttbar << bin_width << " " << efficiency << endl;
 
-        cout << "[ttbar] bin width: " << bin_width << ", efficiency: " << efficiency << endl;
+        cout << "[ttbar] bin width: " << bin_width << ", efficiency: " << efficiency << ", do not have primary vertex: " << do_not_have_pv << endl;
     }
 
     // Zmumu (PU200)
@@ -116,7 +113,7 @@ void save_pu200() {
     TFile *file_zmumu = new TFile(fullPath_zmumu.c_str());
     TTree *tree_zmumu = dynamic_cast<TTree*>(file_zmumu->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree_zmumu, bin_num);
+        tie(reco_z0, primary_vertexies, bin_width, do_not_have_pv) = pv_reco(tree_zmumu, bin_num);
 
         int true_count = 0;
         int false_count = 0;
@@ -132,7 +129,7 @@ void save_pu200() {
         double efficiency = static_cast<double>(true_count) / (true_count + false_count);
         outFile_zmumu_200 << bin_width << " " << efficiency << endl;
 
-        cout << "[Zmumu 200] bin width: " << bin_width << ", efficiency: " << efficiency << endl;
+        cout << "[Zmumu 200] bin width: " << bin_width << ", efficiency: " << efficiency << ", do not have primary vertex: " << do_not_have_pv << endl;
     }
 
     // Zmumu (PU140)
@@ -140,7 +137,7 @@ void save_pu200() {
     TFile *file_zmumu_pu140 = new TFile(fullPath_zmumu_pu140.c_str());
     TTree *tree_zmumu_pu140 = dynamic_cast<TTree*>(file_zmumu_pu140->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree_zmumu_pu140, bin_num);
+        tie(reco_z0, primary_vertexies, bin_width, do_not_have_pv) = pv_reco(tree_zmumu_pu140, bin_num);
 
         int true_count = 0;
         int false_count = 0;
@@ -156,7 +153,7 @@ void save_pu200() {
         double efficiency = static_cast<double>(true_count) / (true_count + false_count);
         outFile_zmumu_140 << bin_width << " " << efficiency << endl;
 
-        cout << "[Zmumu PU140] bin width: " << bin_width << ", efficiency: " << efficiency << endl;
+        cout << "[Zmumu PU140] bin width: " << bin_width << ", efficiency: " << efficiency << ", do not have primary vertex: " << do_not_have_pv << endl;
     }
 
     // Zmumu (PU0)
@@ -164,7 +161,8 @@ void save_pu200() {
     TFile *file_zmumu_pu0 = new TFile(fullPath_zmumu_pu0.c_str());
     TTree *tree_zmumu_pu0 = dynamic_cast<TTree*>(file_zmumu_pu0->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree_zmumu_pu0, bin_num);
+        tie(reco_z0, primary_vertexies, bin_width, do_not_have_pv) = pv_reco(tree_zmumu_pu0, bin_num);
+        cout << "length of reco_z0: " << reco_z0.size() << endl;
 
         int true_count = 0;
         int false_count = 0;
@@ -180,7 +178,7 @@ void save_pu200() {
         double efficiency = static_cast<double>(true_count) / (true_count + false_count);
         outFile_zmumu_0 << bin_width << " " << efficiency << endl;
 
-        cout << "[Zmumu PU0] bin width: " << bin_width << ", efficiency: " << efficiency << endl;
+        cout << "[Zmumu PU0] bin width: " << bin_width << ", efficiency: " << efficiency << ", do not have primary vertex: " << do_not_have_pv << endl;
     }
 
     outFile_ttbar.close();
