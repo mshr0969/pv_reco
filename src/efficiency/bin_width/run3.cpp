@@ -11,11 +11,10 @@ using namespace std;
 
 const char* basePath = getenv("WORKDIR");
 const char* rootFilePath = getenv("REAL_DATA_DIR");
-const char* mcRootFilePath_pu200_ttbar = getenv("MC_DATA_DIR_PU200_TTBAR");
-const char* mcRootFilePath_pu200_zmumu = getenv("MC_DATA_DIR_PU200_Z_MUMU");
-const char* dir = "efficiency";
+const char* mcRootFilePath = getenv("MC_DATA_DIR");
+const char* dir = "efficiency/bin_width";
 
-tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, int bin_num) {
+tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, bool is_ftf, int bin_num) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
     vector<int> *vxp_type = nullptr;
@@ -24,8 +23,11 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, int b
     vector<double> primary_vertexies;
     double bin_width;
 
-    tree->SetBranchAddress("id_trk_pt", &id_trk_pt);
-    tree->SetBranchAddress("id_trk_z0" ,&id_trk_z0);
+    const char* ptBranch = is_ftf ? "ftf_id_trk_pt" : "id_trk_pt";
+    const char* z0Branch = is_ftf ? "ftf_id_trk_z0" : "id_trk_z0";
+
+    tree->SetBranchAddress(ptBranch, &id_trk_pt);
+    tree->SetBranchAddress(z0Branch ,&id_trk_z0);
     tree->SetBranchAddress("vxp_type", &vxp_type);
     tree->SetBranchAddress("vxp_z", &vxp_z);
 
@@ -73,7 +75,9 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, int b
     return make_tuple(reco_z0, primary_vertexies, bin_width);
 }
 
-void bin_width_pu200() {
+void run3() {
+    string fullPath = string(basePath) + "/" + string(mcRootFilePath);
+
     vector<vector<double>> reco_z0;
     vector<double> primary_vertexies;
     double bin_width;
@@ -97,12 +101,11 @@ void bin_width_pu200() {
     int max_bin_num = 65536;
     int min_bin_num = 256;
 
-    // ttbar
-    string fullPath = string(basePath) + "/" + string(mcRootFilePath_pu200_ttbar);
+    // FTF=true
     TFile *file = new TFile(fullPath.c_str());
     TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree, bin_num);
+        tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree, true, bin_num);
 
         int true_count = 0;
         int false_count = 0;
@@ -118,15 +121,14 @@ void bin_width_pu200() {
         double efficiency = static_cast<double>(true_count) / (true_count + false_count);
         g1->SetPoint(g1->GetN(), bin_width, efficiency);
 
-        cout << "[ttbar] bin width: " << bin_width << ", efficiency: " << efficiency << endl;
+        cout << "[FTF] bin width: " << bin_width << ", efficiency: " << efficiency << endl;
     }
 
-    // Zmumu
-    string fullPath_zmumu = string(basePath) + "/" + string(mcRootFilePath_pu200_zmumu);
-    TFile *file_zmumu = new TFile(fullPath_zmumu.c_str());
-    TTree *tree_zmumu = dynamic_cast<TTree*>(file_zmumu->Get("physics"));
+    // FTF=false
+    TFile *file_offline = new TFile(fullPath.c_str());
+    TTree *tree_offline = dynamic_cast<TTree*>(file_offline->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree_zmumu, bin_num);
+        tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree_offline, false, bin_num);
 
         int true_count = 0;
         int false_count = 0;
@@ -142,17 +144,16 @@ void bin_width_pu200() {
         double efficiency = static_cast<double>(true_count) / (true_count + false_count);
         g2->SetPoint(g2->GetN(), bin_width, efficiency);
 
-        cout << "[Zmumu] bin width: " << bin_width << ", efficiency: " << efficiency << endl;
+        cout << "[offline] bin width: " << bin_width << ", efficiency: " << efficiency << endl;
     }
 
     TCanvas *c1 = new TCanvas("c1", "", 800, 600);
-    g1->GetYaxis()->SetRangeUser(0, 1);
     g1->Draw("ALP");
     g2->Draw("LP same");
 
-    TLegend *legend = new TLegend(0.6, 0.5, 0.8, 0.65);
-    legend->AddEntry(g1, "t#bar{t} (PU200)", "l");
-    legend->AddEntry(g2, "Zmumu (PU200)", "l");
+    TLegend *legend = new TLegend(0.6, 0.4, 0.8, 0.55);
+    legend->AddEntry(g1, "t#bar{t} (FTF)", "l");
+    legend->AddEntry(g2, "t#bar{t} (Offline)", "l");
     legend->SetBorderSize(0);
     legend->Draw();
 
@@ -165,7 +166,7 @@ void bin_width_pu200() {
 
     latex.SetTextFont(42); // 標準のフォントスタイルに戻す
     latex.DrawLatex(0.62, 0.25, "Simulation Internal");
-    latex.DrawLatex(0.5, 0.2, "#sqrt{s} = 14 TeV");
+    latex.DrawLatex(0.5, 0.2, "#sqrt{s} = 13.6 TeV");
 
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/bin_width_pu200.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/run3.pdf").c_str());
 }

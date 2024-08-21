@@ -11,8 +11,8 @@ endif
 hadd_files:
 	hadd -f $(outputfile) $(inputdir)/*.root
 
-bin_width:
-	root -l 'src/efficiency/bin_width.cpp'
+bin_width_run3:
+	root -l 'src/efficiency/bin_width/run3.cpp'
 
 bin_width_pu200:
-	root -l 'src/efficiency/bin_width_pu200.cpp'
+	root -l 'src/efficiency/bin_width/pu200.cpp'
