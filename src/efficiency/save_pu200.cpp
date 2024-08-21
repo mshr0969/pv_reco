@@ -73,7 +73,7 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, int b
     return make_tuple(reco_z0, primary_vertexies, bin_width);
 }
 
-void save_txt() {
+void save_pu200() {
     vector<vector<double>> reco_z0;
     vector<double> primary_vertexies;
     double bin_width;
