@@ -19,3 +19,6 @@ bin_width_pu0to200:
 
 save_pu200:
 	root -l 'src/efficiency/save_pu200.cpp'
+
+save_run3:
+	root -l 'src/efficiency/save_run3.cpp'
