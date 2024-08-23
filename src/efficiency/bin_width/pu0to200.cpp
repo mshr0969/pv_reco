@@ -78,13 +78,13 @@ void pu0to200() {
     legend->AddEntry(g1, "t#bar{t} (PU200) #Sigma p_{T}", "l");
     legend->AddEntry(g2, "t#bar{t} (PU200), #Sigma p_{T}^{2}", "l");
     legend->AddEntry(g3, "Zmumu (PU200) #Sigma p_{T}", "l");
-    legend->AddEntry(g4, "Zmumu (PU200), #Sigma p_{T}^{2})", "l");
+    legend->AddEntry(g4, "Zmumu (PU200), #Sigma p_{T}^{2}", "l");
     legend->SetBorderSize(0);
 
     TLegend *legend2 = new TLegend(0.65, 0.15, 0.89, 0.35);
-    legend2->AddEntry(g5, "Zmumu (PU140) #Sigma p_{T})", "l");
+    legend2->AddEntry(g5, "Zmumu (PU140) #Sigma p_{T}", "l");
     legend2->AddEntry(g6, "Zmumu (PU140), #Sigma p_{T}^{2}", "l");
-    legend2->AddEntry(g7, "Zmumu (PU0) #Sigma p_{T})", "l");
+    legend2->AddEntry(g7, "Zmumu (PU0) #Sigma p_{T}", "l");
     legend2->AddEntry(g8, "Zmumu (PU0), #Sigma p_{T}^{2}", "l");
     legend2->SetBorderSize(0);
 
