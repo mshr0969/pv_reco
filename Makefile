@@ -22,3 +22,9 @@ save_pu200:
 
 save_run3:
 	root -l 'src/efficiency/save_run3.cpp'
+
+save_run3_purity:
+	root -l 'src/efficiency/purity/run3.cpp'
+
+purity_run3:
+	root -l 'src/efficiency/purity/run3_plot.cpp'
