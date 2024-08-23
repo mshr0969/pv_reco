@@ -21,21 +21,41 @@ void pu0to200() {
     g1->SetMarkerColor(kBlue);
     g1->SetLineColor(kBlue);
     g1->SetLineWidth(4);
-
-    TGraph *g2 = new TGraph((txtDir + "zmumu_200_efficiency.txt").c_str());
-    g2->SetMarkerColor(kOrange);
-    g2->SetLineColor(kOrange);
+    TGraph *g2 = new TGraph((txtDir + "ttbar_efficiency_pt2.txt").c_str());
+    g2->SetMarkerColor(kBlue);
+    g2->SetLineColor(kBlue);
     g2->SetLineWidth(4);
+    g2->SetLineStyle(2);
 
-    TGraph *g3 = new TGraph((txtDir + "zmumu_140_efficiency.txt").c_str());
-    g3->SetMarkerColor(kGreen+2);
-    g3->SetLineColor(kGreen+2);
+    TGraph *g3 = new TGraph((txtDir + "zmumu_200_efficiency.txt").c_str());
+    g3->SetMarkerColor(kOrange);
+    g3->SetLineColor(kOrange);
     g3->SetLineWidth(4);
-
-    TGraph *g4 = new TGraph((txtDir + "zmumu_0_efficiency.txt").c_str());
-    g4->SetMarkerColor(kRed);
-    g4->SetLineColor(kRed);
+    TGraph *g4 = new TGraph((txtDir + "zmumu_200_efficiency_pt2.txt").c_str());
+    g4->SetMarkerColor(kOrange);
+    g4->SetLineColor(kOrange);
     g4->SetLineWidth(4);
+    g4->SetLineStyle(2);
+
+    TGraph *g5 = new TGraph((txtDir + "zmumu_140_efficiency.txt").c_str());
+    g5->SetMarkerColor(kGreen+2);
+    g5->SetLineColor(kGreen+2);
+    g5->SetLineWidth(4);
+    TGraph *g6 = new TGraph((txtDir + "zmumu_140_efficiency_pt2.txt").c_str());
+    g6->SetMarkerColor(kGreen+2);
+    g6->SetLineColor(kGreen+2);
+    g6->SetLineWidth(4);
+    g6->SetLineStyle(2);
+
+    TGraph *g7 = new TGraph((txtDir + "zmumu_0_efficiency.txt").c_str());
+    g7->SetMarkerColor(kRed);
+    g7->SetLineColor(kRed);
+    g7->SetLineWidth(4);
+    TGraph *g8 = new TGraph((txtDir + "zmumu_0_efficiency_pt2.txt").c_str());
+    g8->SetMarkerColor(kRed);
+    g8->SetLineColor(kRed);
+    g8->SetLineWidth(4);
+    g8->SetLineStyle(2);
 
     TCanvas *c1 = new TCanvas("c1", "", 800, 600);
     g1->GetXaxis()->SetTitle("bin width [mm]");
@@ -49,26 +69,38 @@ void pu0to200() {
     g2->Draw("LP same");
     g3->Draw("LP same");
     g4->Draw("LP same");
+    g5->Draw("LP same");
+    g6->Draw("LP same");
+    g7->Draw("LP same");
+    g8->Draw("LP same");
 
-    TLegend *legend = new TLegend(0.6, 0.15, 0.8, 0.45);
-    legend->AddEntry(g1, "t#bar{t} (PU200)", "l");
-    legend->AddEntry(g2, "Zmumu (PU200)", "l");
-    legend->AddEntry(g3, "Zmumu (PU140)", "l");
-    legend->AddEntry(g4, "Zmumu (PU0)", "l");
+    TLegend *legend = new TLegend(0.4, 0.15, 0.65, 0.35);
+    legend->AddEntry(g1, "t#bar{t} (PU200) #Sigma p_{T}", "l");
+    legend->AddEntry(g2, "t#bar{t} (PU200), #Sigma p_{T}^{2}", "l");
+    legend->AddEntry(g3, "Zmumu (PU200) #Sigma p_{T}", "l");
+    legend->AddEntry(g4, "Zmumu (PU200), #Sigma p_{T}^{2})", "l");
     legend->SetBorderSize(0);
 
+    TLegend *legend2 = new TLegend(0.65, 0.15, 0.89, 0.35);
+    legend2->AddEntry(g5, "Zmumu (PU140) #Sigma p_{T})", "l");
+    legend2->AddEntry(g6, "Zmumu (PU140), #Sigma p_{T}^{2}", "l");
+    legend2->AddEntry(g7, "Zmumu (PU0) #Sigma p_{T})", "l");
+    legend2->AddEntry(g8, "Zmumu (PU0), #Sigma p_{T}^{2}", "l");
+    legend2->SetBorderSize(0);
+
     legend->Draw();
+    legend2->Draw();
 
     // ATLASラベルを追加
     TLatex latex;
     latex.SetNDC();
     latex.SetTextFont(72); // ATLASフォントスタイル
     latex.SetTextSize(0.04);
-    latex.DrawLatex(0.5, 0.7, "ATLAS");
+    latex.DrawLatex(0.16, 0.3, "ATLAS");
 
     latex.SetTextFont(42); // 標準のフォントスタイルに戻す
-    latex.DrawLatex(0.62, 0.7, "Simulation Internal");
-    latex.DrawLatex(0.5, 0.65, "#sqrt{s} = 14 TeV");
+    latex.DrawLatex(0.26, 0.3, "Simulation");
+    latex.DrawLatex(0.2, 0.25, "#sqrt{s} = 14 TeV");
 
     c1->Print((string(basePath) + "/output/" + string(dir) + "/pu0to200.pdf").c_str());
 }
