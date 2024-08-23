@@ -74,7 +74,7 @@ void pu0to200() {
     g7->Draw("LP same");
     g8->Draw("LP same");
 
-    TLegend *legend = new TLegend(0.4, 0.15, 0.65, 0.35);
+    TLegend *legend = new TLegend(0.4, 0.15, 0.64, 0.35);
     legend->AddEntry(g1, "t#bar{t} (PU200) #Sigma p_{T}", "l");
     legend->AddEntry(g2, "t#bar{t} (PU200), #Sigma p_{T}^{2}", "l");
     legend->AddEntry(g3, "Zmumu (PU200) #Sigma p_{T}", "l");
