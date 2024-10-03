@@ -28,3 +28,6 @@ save_run3_purity:
 
 purity_run3:
 	root -l 'src/efficiency/purity/run3_plot.cpp'
+
+pileup:
+	root -l 'src/histo/pileup.cpp'
