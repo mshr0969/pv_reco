@@ -16,7 +16,6 @@ const char* dir = "efficiency/purity";
 const char* dataDir = "src/efficiency/data";
 
 void cut_plot() {
-    gStyle->SetOptStat(0);
     string txtDir = string(basePath) + "/" + string(dataDir) + "/";
     string filePath = txtDir + "cut.txt";
 
