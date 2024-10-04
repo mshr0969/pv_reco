@@ -29,5 +29,14 @@ save_run3_purity:
 purity_run3:
 	root -l 'src/efficiency/purity/run3_plot.cpp'
 
+purity_ttbar200:
+	root -l 'src/efficiency/purity/ttbar_mc200.cpp'
+
 pileup:
 	root -l 'src/histo/pileup.cpp'
+
+cut:
+	root -l 'src/efficiency/purity/cut.cpp'
+
+cut_plot:
+	root -l 'src/efficiency/purity/cut_plot.cpp'
