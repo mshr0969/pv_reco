@@ -48,7 +48,8 @@ tuple<vector<pair<double, double>>, vector<tuple<double, double, double>>> pv_re
             bool match_found = false;
             for (size_t j = 0; j < truth_pt->size(); ++j) {
                 if (abs(id_trk_phi->at(i) - truth_phi->at(j)) < 0.01 &&
-                    abs(id_trk_eta->at(i) - truth_eta->at(j)) < 0.01 ){
+                    abs(id_trk_eta->at(i) - truth_eta->at(j)) < 0.01 &&
+                    abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(j)) / (1.0 / truth_pt->at(j)) < 0.2){
 
                     double pt_diff_value = (1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(j)) / (1.0 / truth_pt->at(j));
                     pt_diff.emplace_back(pt_diff_value, id_trk_pt->at(i));

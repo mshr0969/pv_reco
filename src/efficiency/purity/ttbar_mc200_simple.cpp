@@ -15,7 +15,7 @@ const char* mcTtbarFilePath = getenv("MC_DATA_DIR_PU200_TTBAR");
 const char* dir = "efficiency/purity";
 const char* dataDir = "src/efficiency/data";
 
-tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
+tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
     vector<float> *id_trk_phi = nullptr;
@@ -35,6 +35,11 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
     int num_pv_tracks = 0; // マッチングが取れたトラックの数(MCのPVから派生したトラックの数)
     int num_pv_tracks_within_bin = 0; // 再構成で求めたPVの範囲内にある、かつマッチングが取れたトラックの数
     int num_tracks_within_bin_width = 0; // 再構成で求めたPVの範囲内にあるトラックの数
+
+    /*
+        purity =  num_pv_tracks_within_bin / num_tracks_within_bin_width
+        efficiency = num_pv_tracks_within_bin / num_pv_tracks
+    */
 
     tree->SetBranchAddress("id_trk_pt", &id_trk_pt);
     tree->SetBranchAddress("id_trk_z0", &id_trk_z0);
@@ -72,6 +77,7 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
         }
 
         TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
+
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
             tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
         }
@@ -87,12 +93,12 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
             if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                 num_tracks_within_bin_width++;
             }
-
             // マッチング
             int phi_bin = static_cast<int>((id_trk_phi->at(i) + M_PI) / phi_bin_width);
             int eta_bin = static_cast<int>((id_trk_eta->at(i) + 5.0) / eta_bin_width);
 
             bool matched = false;
+            // 周囲のビンも含めて探索
             for (int dphi = -1; dphi <= 1; ++dphi) {
                 for (int deta = -1; deta <= 1; ++deta) {
                     int neighbor_phi_bin = phi_bin + dphi;
@@ -100,9 +106,10 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
                     auto key = make_pair(neighbor_phi_bin, neighbor_eta_bin);
                     if (truth_map.find(key) != truth_map.end()) {
                         for (size_t idx : truth_map[key]) {
+                            // マッチング条件
                             if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.001 &&
-                                abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.001 &&
-                                (pt_threshold == 0 || abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < pt_threshold)) {
+                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.3 &&
+                                abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.001) {
                                 num_pv_tracks++;
                                 if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                                     num_pv_tracks_within_bin++;
@@ -122,35 +129,68 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
     double purity = static_cast<double>(num_pv_tracks_within_bin) / (num_tracks_within_bin_width);
     double efficiency = static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
 
+    cout << "num_pv_tracks_within_bin: " << num_pv_tracks_within_bin << ", num_tracks_within_bin_width: " << num_tracks_within_bin_width << ", num_pv_tracks: " << num_pv_tracks << ", bin_width: " << bin_width << endl;
+
     return make_tuple(purity, efficiency);
 }
 
-void ttbar_mc200() {
+
+void run3_plot() {
+    string txtDir = string(basePath)+ "/" + string(dataDir) + "/";
+    // TGraph *g1 = new TGraph((txtDir + "run3_ttbar_purity_ftf.txt").c_str());
+    TGraph *g1 = new TGraph((txtDir + "ttbar_mc200.txt").c_str());
+    g1->SetTitle("");
+    g1->SetMarkerColor(kBlue);
+    g1->SetLineColor(kBlue);
+    g1->SetLineWidth(4);
+
+    TCanvas *c1 = new TCanvas("c1", "", 800, 600);
+    g1->GetXaxis()->SetTitle("efficiency");
+    g1->GetYaxis()->SetTitle("purity");
+    g1->GetXaxis()->SetTitleSize(0.04);
+    g1->GetYaxis()->SetTitleSize(0.04);
+    g1->GetXaxis()->SetLabelSize(0.04);
+    g1->GetYaxis()->SetLabelSize(0.04);
+    g1->Draw("ALP");
+
+    // ATLASラベルを追加
+    TLatex latex;
+    latex.SetNDC();
+    latex.SetTextFont(72); // ATLASフォントスタイル
+    latex.SetTextSize(0.04);
+    latex.DrawLatex(0.5, 0.5, "ATLAS");
+
+    latex.SetTextFont(42); // 標準のフォントスタイルに戻す
+    latex.DrawLatex(0.62, 0.5, "Simulation Work in Progress");
+    latex.DrawLatex(0.5, 0.45, "#sqrt{s} = 14 TeV");
+
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/ttbar200.pdf").c_str());
+}
+
+
+void ttbar_mc200_simple() {
     string fullPath = string(basePath) + "/" + string(mcTtbarFilePath);
+
     vector<double> primary_vertexies;
     double purity;
     double efficiency;
 
     string outputDir = string(basePath) + "/" + string(dataDir) + "/";
+    ofstream outFile_ttbar(outputDir + "ttbar_mc200.txt");
 
-    // 条件なし、0.2、0.1、0.05 のしきい値ごとにファイルを作成
-    vector<double> pt_thresholds = {0, 0.2, 0.1, 0.05};
-    for (double pt_threshold : pt_thresholds) {
-        string fileName = outputDir + "ttbar_mc200_" + to_string(pt_threshold) + ".txt";
-        ofstream outFile_ttbar(fileName);
+    int max_bin_num = 65536;
+    int min_bin_num = 256;
 
-        int max_bin_num = 65536;
-        int min_bin_num = 256;
+    TFile *file = new TFile(fullPath.c_str());
+    TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
+    for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
+        tie(purity, efficiency) = pv_reco(tree, bin_num);
+        outFile_ttbar << efficiency << " "  << purity << endl;
 
-        TFile *file = new TFile(fullPath.c_str());
-        TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
-
-        for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-            tie(purity, efficiency) = pv_reco(tree, bin_num, pt_threshold);
-            outFile_ttbar << efficiency << " "  << purity << endl;
-
-            cout << "efficiency: " << efficiency << ", purity: " << purity << " for pt_threshold = " << pt_threshold << endl;
-        }
-        outFile_ttbar.close();
+        cout << "[offline] efficiency: " << efficiency << ", purity: " << purity << endl;
     }
+
+    outFile_ttbar.close();
+
+    run3_plot();
 }
