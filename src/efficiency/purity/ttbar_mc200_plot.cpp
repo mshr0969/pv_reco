@@ -36,11 +36,11 @@ void ttbar_mc200_plot() {
     latex.SetNDC();
     latex.SetTextFont(72); // ATLASフォントスタイル
     latex.SetTextSize(0.04);
-    latex.DrawLatex(0.5, 0.5, "ATLAS");
+    latex.DrawLatex(0.2, 0.5, "ATLAS");
 
     latex.SetTextFont(42); // 標準のフォントスタイルに戻す
-    latex.DrawLatex(0.62, 0.5, "Simulation Work in Progress");
-    latex.DrawLatex(0.5, 0.45, "#sqrt{s} = 14 TeV");
+    latex.DrawLatex(0.32, 0.5, "Simulation Work in Progress");
+    latex.DrawLatex(0.2, 0.45, "#sqrt{s} = 14 TeV");
 
     c1->Print((string(basePath) + "/output/" + string(dir) + "/ttbar200.pdf").c_str());
 }
