@@ -124,10 +124,10 @@ void cut_plot_pt() {
     delete h2;
 }
 
-void cut_plot_phi() {
+void cut_plot_eta() {
     string txtDir = string(basePath) + "/" + string(dataDir) + "/";
-    string filePath = txtDir + "cut_phi.txt";
-    string failedFilePath = txtDir + "cut_failed_phi.txt";
+    string filePath = txtDir + "cut_eta.txt";
+    string failedFilePath = txtDir + "cut_failed_eta.txt";
 
     // ファイルの読み込み
     ifstream inFile(filePath.c_str());
@@ -136,14 +136,14 @@ void cut_plot_phi() {
         return;
     }
 
-    vector<double> phiDiffValues;
-    vector<double> phiValues;
-    double phi_diff, phi_value;
+    vector<double> etaDiffValues;
+    vector<double> etaValues;
+    double eta_diff, eta_value;
 
     // ファイルから値を2列読み込み、対応するベクトルに格納
-    while (inFile >> phi_diff >> phi_value) {
-        phiDiffValues.push_back(phi_diff);
-        phiValues.push_back(phi_value);
+    while (inFile >> eta_diff >> eta_value) {
+        etaDiffValues.push_back(eta_diff);
+        etaValues.push_back(eta_value);
     }
     inFile.close();
 
@@ -166,19 +166,19 @@ void cut_plot_phi() {
     }
     failedFile.close();
 
-    // 1 次元ヒストグラム (phi diff の分布) の作成と描画
+    // 1 次元ヒストグラム (eta diff の分布) の作成と描画
     int nBins1D = 256;
     TH1D* h1 = new TH1D("h1", "", nBins1D, -0.02, 0.02);
-    for (size_t i = 0; i < phiDiffValues.size(); ++i) {
-        h1->Fill(phiDiffValues[i]);
+    for (size_t i = 0; i < etaDiffValues.size(); ++i) {
+        h1->Fill(etaDiffValues[i]);
     }
 
     TCanvas* c1 = new TCanvas("c1", "Cut Distribution", 860, 600);
-    h1->GetXaxis()->SetTitle("phi diff");
+    h1->GetXaxis()->SetTitle("eta diff");
     h1->GetYaxis()->SetTitle("Entries");
     h1->Draw();
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_phi.pdf[").c_str());
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_phi.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_eta.pdf[").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_eta.pdf").c_str());
 
     TH1D *h2_z0 = new TH1D("z0", "", nBins1D, -300, 300);
     for (size_t i = 0; i < failed_z0.size(); ++i) {
@@ -187,7 +187,7 @@ void cut_plot_phi() {
     h2_z0->GetXaxis()->SetTitle("offline track z0 [mm]");
     h2_z0->GetYaxis()->SetTitle("Entries");
     h2_z0->Draw();
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_phi.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_eta.pdf").c_str());
 
     TH1D *h2_d0 = new TH1D("d0", "", nBins1D, -5, 5);
     for (size_t i = 0; i < failed_d0.size(); ++i) {
@@ -196,7 +196,7 @@ void cut_plot_phi() {
     h2_d0->GetXaxis()->SetTitle("offline track d0 [mm]");
     h2_d0->GetYaxis()->SetTitle("Entries");
     h2_d0->Draw();
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_phi.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_eta.pdf").c_str());
 
     TH1D *h2_pt = new TH1D("pT", "", nBins1D, 0, 120000);
     for (size_t i = 0; i < failed_pt.size(); ++i) {
@@ -206,8 +206,8 @@ void cut_plot_phi() {
     h2_pt->GetYaxis()->SetTitle("Entries");
     h2_pt->Draw();
     c1->SetLogy();
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_phi.pdf").c_str());
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_phi.pdf]").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_eta.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_eta.pdf]").c_str());
 
     // メモリ解放
     delete c1;

@@ -100,8 +100,8 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
                     auto key = make_pair(neighbor_phi_bin, neighbor_eta_bin);
                     if (truth_map.find(key) != truth_map.end()) {
                         for (size_t idx : truth_map[key]) {
-                            if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.001 &&
-                                abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.001 &&
+                            if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.0025 &&
+                                abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.0025 &&
                                 (pt_threshold == 0 || abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < pt_threshold)) {
                                 num_pv_tracks++;
                                 if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
@@ -140,7 +140,7 @@ void ttbar_mc200() {
         ofstream outFile_ttbar(fileName);
 
         int max_bin_num = 65536;
-        int min_bin_num = 256;
+        int min_bin_num = 128;
 
         TFile *file = new TFile(fullPath.c_str());
         TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
