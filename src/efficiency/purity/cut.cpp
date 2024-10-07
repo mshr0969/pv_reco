@@ -39,7 +39,7 @@ tuple<vector<pair<double, double>>, vector<tuple<double, double, double>>> pv_re
 
     int entries = tree->GetEntries();
 
-    vector<pair<double, double>> pt_diff;
+    vector<pair<double, double>> diff;
     vector<tuple<double, double, double>> failed_track;
 
     for (int entry = 0; entry < entries; entry++) {
@@ -47,12 +47,16 @@ tuple<vector<pair<double, double>>, vector<tuple<double, double, double>>> pv_re
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
             bool match_found = false;
             for (size_t j = 0; j < truth_pt->size(); ++j) {
-                if (abs(id_trk_phi->at(i) - truth_phi->at(j)) < 0.01 &&
-                    abs(id_trk_eta->at(i) - truth_eta->at(j)) < 0.01 &&
-                    abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(j)) / (1.0 / truth_pt->at(j)) < 0.2){
+                if (
+                    // abs(id_trk_phi->at(i) - truth_phi->at(j)) < 0.01 &&
+                    abs(id_trk_eta->at(i) - truth_eta->at(j)) < 0.005 &&
+                    abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(j)) / (1.0 / truth_pt->at(j)) < 0.2
+                    ){
 
-                    double pt_diff_value = (1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(j)) / (1.0 / truth_pt->at(j));
-                    pt_diff.emplace_back(pt_diff_value, id_trk_pt->at(i));
+                    // double diff_value = (1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(j)) / (1.0 / truth_pt->at(j));
+                    // double diff_value = id_trk_eta->at(i) - truth_eta->at(j);
+                    double diff_value = id_trk_phi->at(i) - truth_phi->at(j);
+                    diff.emplace_back(diff_value, id_trk_pt->at(i));
                     match_found = true;
                     break;
                 }
@@ -63,7 +67,7 @@ tuple<vector<pair<double, double>>, vector<tuple<double, double, double>>> pv_re
         }
     }
 
-    return make_tuple(pt_diff, failed_track);
+    return make_tuple(diff, failed_track);
 }
 
 void cut() {
@@ -71,21 +75,21 @@ void cut() {
     TFile *file = new TFile(fullPath.c_str());
     TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
 
-    double pt_diff;
-    double pt_value;
+    double diff;
+    double value;
 
     // 保存
     string outputDir = string(basePath) + "/" + string(dataDir) + "/";
-    ofstream outFile(outputDir + "cut.txt");
-    ofstream failedFile(outputDir + "cut_failed.txt");
+    ofstream outFile(outputDir + "cut_phi.txt");
+    ofstream failedFile(outputDir + "cut_failed_phi.txt");
 
-    vector<pair<double, double>> pt_diff_values;
+    vector<pair<double, double>> diff_values;
     vector<tuple<double, double, double>> failed_tracks;
-    tie(pt_diff_values, failed_tracks) = pv_reco(tree);
+    tie(diff_values, failed_tracks) = pv_reco(tree);
 
     // カットを満たしたデータを保存
-    for (const auto &pt_value : pt_diff_values) {
-        outFile << pt_value.first << " " << pt_value.second << endl;
+    for (const auto &value : diff_values) {
+        outFile << value.first << " " << value.second << endl;
     }
 
     // カットを満たさなかったデータを保存
