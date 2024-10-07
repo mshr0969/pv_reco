@@ -32,6 +32,9 @@ purity_run3:
 purity_ttbar200:
 	root -l 'src/efficiency/purity/ttbar_mc200.cpp'
 
+purity_ttbar200_plot:
+	root -l 'src/efficiency/purity/ttbar_mc200_plot.cpp'
+
 pileup:
 	root -l 'src/histo/pileup.cpp'
 
