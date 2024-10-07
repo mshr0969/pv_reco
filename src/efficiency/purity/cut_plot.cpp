@@ -59,19 +59,19 @@ void cut_plot() {
 
     // 1 次元ヒストグラム (pt_diff の分布) の作成と描画
     int nBins1D = 256;
-    TH1D* h1 = new TH1D("h1", "pt_diff Distribution", nBins1D, -1, 1);
+    TH1D* h1 = new TH1D("h1", "", nBins1D, -1, 1);
     for (size_t i = 0; i < ptDiffValues.size(); ++i) {
         h1->Fill(ptDiffValues[i]);
     }
 
-    TCanvas* c1 = new TCanvas("c1", "Cut Distribution", 800, 600);
+    TCanvas* c1 = new TCanvas("c1", "Cut Distribution", 860, 600);
     h1->GetXaxis()->SetTitle("pT diff");
     h1->GetYaxis()->SetTitle("Entries");
     h1->Draw();
     c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_1D.pdf[").c_str());
     c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_1D.pdf").c_str());
 
-    TH1D *h2_z0 = new TH1D("z0", "failed z0", nBins1D, -300, 300);
+    TH1D *h2_z0 = new TH1D("z0", "", nBins1D, -300, 300);
     for (size_t i = 0; i < failed_z0.size(); ++i) {
         h2_z0->Fill(failed_z0[i]);
     }
@@ -80,7 +80,7 @@ void cut_plot() {
     h2_z0->Draw();
     c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_1D.pdf").c_str());
 
-    TH1D *h2_d0 = new TH1D("d0", "failed d0", nBins1D, -5, 5);
+    TH1D *h2_d0 = new TH1D("d0", "", nBins1D, -5, 5);
     for (size_t i = 0; i < failed_d0.size(); ++i) {
         h2_d0->Fill(failed_d0[i]);
     }
@@ -89,7 +89,7 @@ void cut_plot() {
     h2_d0->Draw();
     c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_1D.pdf").c_str());
 
-    TH1D *h2_pt = new TH1D("pT", "failed pT", nBins1D, 0, 120000);
+    TH1D *h2_pt = new TH1D("pT", "", nBins1D, 0, 120000);
     for (size_t i = 0; i < failed_pt.size(); ++i) {
         h2_pt->Fill(failed_pt[i]);
     }
