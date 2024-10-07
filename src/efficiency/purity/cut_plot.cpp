@@ -48,19 +48,20 @@ void cut_plot() {
     h1->Draw();
     c1->Print((string(basePath) + "/output/" + string(dir) + "/cut_1D.pdf").c_str());
 
+    gStyle->SetOptStat(0);
     int nBinsX = 256;
     int nBinsY = 256;
-    double xMin = -1.0, xMax = 1.0;
-    double yMin = 0.0, yMax = 100000.0;
+    double yMin = -1.0, yMax = 1.0;
+    double xMin = 0.0, xMax = 100000.0;
 
     TH2D* h2 = new TH2D("h2", "", nBinsX, xMin, xMax, nBinsY, yMin, yMax);
     for (size_t i = 0; i < ptDiffValues.size(); ++i) {
-        h2->Fill(ptDiffValues[i], ptValues[i]);
+        h2->Fill(ptValues[i], ptDiffValues[i]);
     }
 
     TCanvas* c2 = new TCanvas("c2", "2D Cut Distribution", 800, 600);
-    h2->GetXaxis()->SetTitle("pt_diff");
-    h2->GetYaxis()->SetTitle("pt");
+    h2->GetYaxis()->SetTitle("pt_diff");
+    h2->GetXaxis()->SetTitle("pt");
     h2->Draw("colz");
     c2->Print((string(basePath) + "/output/" + string(dir) + "/cut_2D.pdf").c_str());
 
