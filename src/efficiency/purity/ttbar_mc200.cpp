@@ -15,7 +15,7 @@ const char* mcTtbarFilePath = getenv("MC_DATA_DIR_PU200_TTBAR");
 const char* dir = "efficiency/purity";
 const char* dataDir = "src/efficiency/data";
 
-tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
+tuple<double, double, double, int> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
     vector<float> *id_trk_phi = nullptr;
@@ -51,10 +51,14 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
     tree->SetBranchAddress("truth_rapidity", &truth_rapidity);
 
     int entries = tree->GetEntries();
+    int successful_entries = 0;
 
     // マッチング用のビン幅を設定
     const double phi_bin_width = 0.02; // phiのビン幅
     const double eta_bin_width = 0.02; // etaのビン幅
+
+    double total_purity = 0.0;
+    double total_efficiency = 0.0;
 
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
@@ -117,12 +121,25 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, double pt_threshold) {
                 if (matched) break;
             }
         }
+
+        if (num_pv_tracks_within_bin != 0) {
+            successful_entries++;
+        }
+
+        total_purity += static_cast<double>(num_pv_tracks_within_bin) / num_tracks_within_bin_width;
+        total_efficiency += static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
+        num_pv_tracks = 0;
+        num_pv_tracks_within_bin = 0;
+        num_tracks_within_bin_width = 0;
     }
 
-    double purity = static_cast<double>(num_pv_tracks_within_bin) / (num_tracks_within_bin_width);
-    double efficiency = static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
+    double purity = total_purity / successful_entries;
+    double efficiency = total_efficiency / successful_entries;
+    int failed_entries = entries - successful_entries;
 
-    return make_tuple(purity, efficiency);
+    cout << "efficiency: " << efficiency << ", purity: " << purity << ", total_efficiency = " << total_efficiency << ", failed_entries: " << failed_entries << ", bin_width = " << bin_width << endl;
+
+    return make_tuple(purity, efficiency, bin_width, failed_entries);
 }
 
 void ttbar_mc200() {
@@ -130,6 +147,8 @@ void ttbar_mc200() {
     vector<double> primary_vertexies;
     double purity;
     double efficiency;
+    double bin_width;
+    int failed_entries;
 
     string outputDir = string(basePath) + "/" + string(dataDir) + "/";
 
@@ -140,16 +159,14 @@ void ttbar_mc200() {
         ofstream outFile_ttbar(fileName);
 
         int max_bin_num = 65536;
-        int min_bin_num = 128;
+        int min_bin_num = 1;
 
         TFile *file = new TFile(fullPath.c_str());
         TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
 
         for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-            tie(purity, efficiency) = pv_reco(tree, bin_num, pt_threshold);
-            outFile_ttbar << efficiency << " "  << purity << endl;
-
-            cout << "efficiency: " << efficiency << ", purity: " << purity << " for pt_threshold = " << pt_threshold << endl;
+            tie(purity, efficiency, bin_width, failed_entries) = pv_reco(tree, bin_num, pt_threshold);
+            outFile_ttbar << efficiency << " "  << purity << " " << bin_width << " " << failed_entries << endl;
         }
         outFile_ttbar.close();
     }

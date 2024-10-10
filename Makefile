@@ -43,3 +43,6 @@ cut:
 
 cut_plot:
 	root -l 'src/efficiency/purity/cut_plot.cpp'
+
+ttbar_mc200_entry:
+	root -l 'src/efficiency/purity/ttbar_mc200_entry.cpp'

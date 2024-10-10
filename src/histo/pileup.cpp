@@ -32,9 +32,9 @@ void pileup() {
     int entries =  tree->GetEntries();
     cout << "Total number of events: " << entries << endl;
 
-    tree->GetEntry(10);
+    tree->GetEntry(33);
     string title =  "z_{0} weighted by p_{T}";
-    TH1D *h1 = new TH1D("h1", title.c_str(), 256, -120, 120);
+    TH1D *h1 = new TH1D("h1", title.c_str(), 8, -300, 300);
     h1->SetFillColor(kBlue - 10);
 
     std::map<int, double> binValues;

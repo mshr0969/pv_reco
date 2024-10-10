@@ -50,6 +50,8 @@ tuple<vector<vector<double>>, double, double> pv_reco(TTree *tree, int bin_num) 
     const double phi_bin_width = 0.02; // phiのビン幅
     const double eta_bin_width = 0.02; // etaのビン幅
 
+    double efficiency = 0.0;
+
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
 
@@ -109,11 +111,13 @@ tuple<vector<vector<double>>, double, double> pv_reco(TTree *tree, int bin_num) 
                 if (matched) break;
             }
         }
+
+        efficiency = efficiency + static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
     }
 
-    double efficiency = static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
+    double avg_efficiency = efficiency / entries;
 
-    return make_tuple(reco_z0, bin_width, efficiency);
+    return make_tuple(reco_z0, bin_width, avg_efficiency);
 }
 
 tuple<vector<vector<double>>, double, double> pv_reco_pt2(TTree *tree, int bin_num) {
@@ -148,6 +152,7 @@ tuple<vector<vector<double>>, double, double> pv_reco_pt2(TTree *tree, int bin_n
     // マッチング用のビン幅を設定
     const double phi_bin_width = 0.02; // phiのビン幅
     const double eta_bin_width = 0.02; // etaのビン幅
+    double efficiency = 0.0;
 
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
@@ -208,11 +213,13 @@ tuple<vector<vector<double>>, double, double> pv_reco_pt2(TTree *tree, int bin_n
                 if (matched) break;
             }
         }
+
+        efficiency = efficiency + static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
     }
 
-    double efficiency = static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
+    double avg_efficiency = efficiency / entries;
 
-    return make_tuple(reco_z0, bin_width, efficiency);
+    return make_tuple(reco_z0, bin_width, avg_efficiency);
 }
 
 void save_pu200() {

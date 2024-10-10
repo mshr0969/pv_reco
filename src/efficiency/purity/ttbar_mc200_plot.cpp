@@ -35,6 +35,10 @@ void ttbar_mc200_plot() {
     // グラフの色設定
     vector<int> colors = {kBlue, kRed, kGreen, kMagenta};
 
+    // PDF 出力ファイル名
+    string pdfFileName = string(basePath) + "/output/" + string(dir) + "/ttbar200_comparison.pdf";
+
+    // キャンバスの作成（1ページ目：efficiency vs purity）
     TCanvas *c1 = new TCanvas("c1", "", 800, 600);
     
     // 凡例の作成
@@ -47,7 +51,7 @@ void ttbar_mc200_plot() {
     // 各ファイルを TGraph に読み込み、設定を行う
     for (size_t i = 0; i < fileNames.size(); ++i) {
         string filePath = txtDir + fileNames[i];
-        TGraph *graph = new TGraph(filePath.c_str());
+        TGraph *graph = new TGraph(filePath.c_str(), "%lg %lg");
         graph->SetMarkerColor(colors[i]);
         graph->SetLineColor(colors[i]);
         graph->SetLineWidth(2);
@@ -84,13 +88,59 @@ void ttbar_mc200_plot() {
     latex.DrawLatex(0.32, 0.5, "Simulation Work in Progress");
     latex.DrawLatex(0.2, 0.45, "#sqrt{s} = 14 TeV");
 
-    // 出力 PDF ファイル名
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/ttbar200_comparison.pdf").c_str());
+    // 1ページ目の PDF を出力
+    c1->Print((pdfFileName + "(").c_str());
+
+    // 2ページ目のキャンバスを作成（bin_width vs failed_entries のグラフ）
+    TCanvas *c2 = new TCanvas("c2", "", 900, 600);
+
+    // 2ページ目のグラフ用の凡例
+    TLegend *legend2 = new TLegend(0.15, 0.15, 0.45, 0.35);
+    legend2->SetBorderSize(0); // 枠線をなくす
+    legend2->SetTextSize(0.03);
+
+    vector<TGraph*> graphs_failed;
+
+    // 各ファイルを TGraph として読み込み、bin_width vs failed_entries のグラフを作成
+    for (size_t i = 0; i < fileNames.size(); ++i) {
+        string filePath = txtDir + fileNames[i];
+        
+        TGraph *graph_failed = new TGraph(filePath.c_str(), "%lg %*lg %*lg %lg");
+        graph_failed->SetMarkerColor(colors[i]);
+        graph_failed->SetLineColor(colors[i]);
+        graph_failed->SetLineWidth(2);
+        graph_failed->SetMarkerStyle(21);
+        graph_failed->SetTitle("");
+
+        if (i == 0) {
+            graph_failed->GetXaxis()->SetTitle("efficiency");
+            graph_failed->GetYaxis()->SetTitle("failed_entries");
+            graph_failed->GetXaxis()->SetTitleSize(0.04);
+            graph_failed->GetYaxis()->SetTitleSize(0.04);
+            graph_failed->GetXaxis()->SetLabelSize(0.04);
+            graph_failed->GetYaxis()->SetLabelSize(0.04);
+            graph_failed->Draw("ALP");  // 最初のグラフを描画
+        } else {
+            graph_failed->Draw("LP SAME");  // 同じキャンバスに重ねて描画
+        }
+
+        legend2->AddEntry(graph_failed, labels[i].c_str(), "lp");  // 凡例に追加
+        graphs_failed.push_back(graph_failed);
+    }
+
+    legend2->Draw();
+
+    c2->Print((pdfFileName + ")").c_str());
 
     // メモリ解放
     delete c1;
+    delete c2;
     for (TGraph* graph : graphs) {
         delete graph;
     }
+    for (TGraph* graph_failed : graphs_failed) {
+        delete graph_failed;
+    }
     delete legend;
+    delete legend2;
 }
