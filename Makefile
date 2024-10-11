@@ -49,3 +49,9 @@ ttbar_mc200_entry:
 
 ttbar_mc200_simple:
 	root -l 'src/efficiency/purity/ttbar_mc200_simple.cpp'
+
+purity_efficiency:
+	root -l 'src/efficiency/purity/purity_efficiency.cpp'
+
+purity_efficiency_plot:
+	root -l 'src/efficiency/purity/purity_efficiency_plot.cpp'
