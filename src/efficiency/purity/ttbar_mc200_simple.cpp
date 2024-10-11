@@ -20,7 +20,6 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     vector<float> *id_trk_z0 = nullptr;
     vector<float> *id_trk_phi = nullptr;
     vector<float> *id_trk_eta = nullptr;
-    vector<float> *id_trk_theta = nullptr;
     vector<int> *vxp_nTracks = nullptr;
     vector<int> *vxp_type = nullptr;
     vector<float> *vxp_z = nullptr;
@@ -28,7 +27,6 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     vector<double> *truth_phi = nullptr;
     vector<double> *truth_eta = nullptr;
     vector<double> *truth_charge = nullptr;
-    vector<double> *truth_rapidity = nullptr;
 
     double bin_width;
 
@@ -45,7 +43,6 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     tree->SetBranchAddress("id_trk_z0", &id_trk_z0);
     tree->SetBranchAddress("id_trk_phi", &id_trk_phi);
     tree->SetBranchAddress("id_trk_eta", &id_trk_eta);
-    tree->SetBranchAddress("id_trk_theta", &id_trk_theta);
     tree->SetBranchAddress("vxp_type", &vxp_type);
     tree->SetBranchAddress("vxp_z", &vxp_z);
     tree->SetBranchAddress("vxp_nTracks", &vxp_nTracks);
@@ -53,13 +50,15 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     tree->SetBranchAddress("truth_phi", &truth_phi);
     tree->SetBranchAddress("truth_charge", &truth_charge);
     tree->SetBranchAddress("truth_eta", &truth_eta);
-    tree->SetBranchAddress("truth_rapidity", &truth_rapidity);
 
     int entries = tree->GetEntries();
 
     // マッチング用のビン幅を設定
     const double phi_bin_width = 0.02; // phiのビン幅
     const double eta_bin_width = 0.02; // etaのビン幅
+
+    double total_purity = 0.0;
+    double total_efficiency = 0.0;
 
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
@@ -107,9 +106,9 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
                     if (truth_map.find(key) != truth_map.end()) {
                         for (size_t idx : truth_map[key]) {
                             // マッチング条件
-                            if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.001 &&
-                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.3 &&
-                                abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.001) {
+                            if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.0025 &&
+                                abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.0025 &&
+                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.1) {
                                 num_pv_tracks++;
                                 if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                                     num_pv_tracks_within_bin++;
@@ -124,12 +123,15 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
                 if (matched) break;
             }
         }
+        total_purity += static_cast<double>(num_pv_tracks_within_bin) / num_tracks_within_bin_width;
+        total_efficiency += static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
+        num_pv_tracks = 0;
+        num_pv_tracks_within_bin = 0;
+        num_tracks_within_bin_width = 0;
     }
 
-    double purity = static_cast<double>(num_pv_tracks_within_bin) / (num_tracks_within_bin_width);
-    double efficiency = static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
-
-    cout << "num_pv_tracks_within_bin: " << num_pv_tracks_within_bin << ", num_tracks_within_bin_width: " << num_tracks_within_bin_width << ", num_pv_tracks: " << num_pv_tracks << ", bin_width: " << bin_width << endl;
+    double purity = total_purity / entries;
+    double efficiency = total_efficiency / entries;
 
     return make_tuple(purity, efficiency);
 }
@@ -142,9 +144,10 @@ void run3_plot() {
     g1->SetTitle("");
     g1->SetMarkerColor(kBlue);
     g1->SetLineColor(kBlue);
+    g1->SetMarkerStyle(21);
     g1->SetLineWidth(4);
 
-    TCanvas *c1 = new TCanvas("c1", "", 800, 600);
+    TCanvas *c1 = new TCanvas("c1", "", 850, 600);
     g1->GetXaxis()->SetTitle("efficiency");
     g1->GetYaxis()->SetTitle("purity");
     g1->GetXaxis()->SetTitleSize(0.04);
@@ -158,11 +161,11 @@ void run3_plot() {
     latex.SetNDC();
     latex.SetTextFont(72); // ATLASフォントスタイル
     latex.SetTextSize(0.04);
-    latex.DrawLatex(0.5, 0.5, "ATLAS");
+    latex.DrawLatex(0.2, 0.5, "ATLAS");
 
     latex.SetTextFont(42); // 標準のフォントスタイルに戻す
-    latex.DrawLatex(0.62, 0.5, "Simulation Work in Progress");
-    latex.DrawLatex(0.5, 0.45, "#sqrt{s} = 14 TeV");
+    latex.DrawLatex(0.32, 0.5, "Simulation Work in Progress");
+    latex.DrawLatex(0.2, 0.45, "#sqrt{s} = 14 TeV");
 
     c1->Print((string(basePath) + "/output/" + string(dir) + "/ttbar200.pdf").c_str());
 }
@@ -178,7 +181,7 @@ void ttbar_mc200_simple() {
     string outputDir = string(basePath) + "/" + string(dataDir) + "/";
     ofstream outFile_ttbar(outputDir + "ttbar_mc200.txt");
 
-    int max_bin_num = 65536;
+    int max_bin_num = 8192;
     int min_bin_num = 256;
 
     TFile *file = new TFile(fullPath.c_str());
@@ -187,7 +190,7 @@ void ttbar_mc200_simple() {
         tie(purity, efficiency) = pv_reco(tree, bin_num);
         outFile_ttbar << efficiency << " "  << purity << endl;
 
-        cout << "[offline] efficiency: " << efficiency << ", purity: " << purity << endl;
+        cout << "efficiency: " << efficiency << ", purity: " << purity << endl;
     }
 
     outFile_ttbar.close();

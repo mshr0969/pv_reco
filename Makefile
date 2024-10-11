@@ -46,3 +46,6 @@ cut_plot:
 
 ttbar_mc200_entry:
 	root -l 'src/efficiency/purity/ttbar_mc200_entry.cpp'
+
+ttbar_mc200_simple:
+	root -l 'src/efficiency/purity/ttbar_mc200_simple.cpp'
