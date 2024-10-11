@@ -133,8 +133,8 @@ tuple<double, double, double, int> pv_reco(TTree *tree, int bin_num, double pt_t
         num_tracks_within_bin_width = 0;
     }
 
-    double purity = total_purity / successful_entries;
-    double efficiency = total_efficiency / successful_entries;
+    double purity = total_purity / entries;
+    double efficiency = total_efficiency / entries;
     int failed_entries = entries - successful_entries;
 
     cout << "efficiency: " << efficiency << ", purity: " << purity << ", total_efficiency = " << total_efficiency << ", failed_entries: " << failed_entries << ", bin_width = " << bin_width << endl;
@@ -158,8 +158,8 @@ void ttbar_mc200() {
         string fileName = outputDir + "ttbar_mc200_" + to_string(pt_threshold) + ".txt";
         ofstream outFile_ttbar(fileName);
 
-        int max_bin_num = 65536;
-        int min_bin_num = 1;
+        int max_bin_num = 8192;
+        int min_bin_num = 256;
 
         TFile *file = new TFile(fullPath.c_str());
         TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
