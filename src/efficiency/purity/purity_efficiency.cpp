@@ -19,7 +19,7 @@ const char* mcRootFilePath_pu0_zmumu = getenv("MC_DATA_DIR_PU0_Z_MUMU");
 const char* dir = "efficiency/purity";
 const char* dataDir = "src/efficiency/data/purity";
 
-tuple<double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
+tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
     vector<float> *id_trk_phi = nullptr;
@@ -79,7 +79,7 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
             truth_map[make_pair(phi_bin, eta_bin)].push_back(j);
         }
 
-        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
+        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -200, 200);
 
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
             if (is_pt2) {
@@ -145,13 +145,14 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
     double purity = total_purity / entries;
     double efficiency = total_efficiency / entries;
 
-    return make_tuple(purity, efficiency);
+    return make_tuple(purity, efficiency, bin_width);
 }
 
 void purity_efficiency() {
     vector<double> primary_vertexies;
     double purity;
     double efficiency;
+    double bin_width;
 
     string outputDir = string(basePath) + "/" + string(dataDir) + "/";
     ofstream outFile_ttbar(outputDir + "ttbar_mc200.txt");
@@ -163,26 +164,26 @@ void purity_efficiency() {
     ofstream outFile_zmumu0(outputDir + "zmumu_mc0.txt");
     ofstream outFile_zmumu0_pt2(outputDir + "zmumu_mc0_pt2.txt");
 
-    int max_bin_num = 8192;
-    int min_bin_num = 256;
+    int max_bin_num = 4096;
+    int min_bin_num = 128;
 
     // ttbar (PU200)
     string fullPath = string(basePath) + "/" + string(mcRootFilePath_pu200_ttbar);
     TFile *file = new TFile(fullPath.c_str());
     TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(purity, efficiency) = pv_reco(tree, bin_num, false);
+        tie(purity, efficiency, bin_width) = pv_reco(tree, bin_num, false);
         outFile_ttbar << efficiency << " "  << purity << endl;
 
-        cout << "[ttbar PU200] efficiency: " << efficiency << ", purity: " << purity << endl;
+        cout << "[ttbar PU200] efficiency: " << efficiency << ", purity: " << purity << " bin_num: " << bin_num << " bin_width: " << bin_width << endl;
     }
 
     // ttbar (PU200) pt^2
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(purity, efficiency) = pv_reco(tree, bin_num, true);
+        tie(purity, efficiency, bin_width) = pv_reco(tree, bin_num, true);
         outFile_ttbar_pt2 << efficiency << " "  << purity << endl;
 
-        cout << "[ttbar PU200 pt^2] efficiency: " << efficiency << ", purity: " << purity << endl;
+        cout << "[ttbar PU200 pt^2] efficiency: " << efficiency << ", purity: " << purity << " bin_num: " << bin_num << " bin_width: " << bin_width << endl;
     }
 
     // Zmumu (PU200)
@@ -190,18 +191,18 @@ void purity_efficiency() {
     TFile *file_zmumu = new TFile(fullPath_zmumu.c_str());
     TTree *tree_zmumu = dynamic_cast<TTree*>(file_zmumu->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(purity, efficiency) = pv_reco(tree_zmumu, bin_num, false);
+        tie(purity, efficiency, bin_width) = pv_reco(tree_zmumu, bin_num, false);
         outFile_zmumu << efficiency << " "  << purity << endl;
 
-        cout << "[Zmumu PU200] efficiency: " << efficiency << ", purity: " << purity << endl;
+        cout << "[Zmumu PU200] efficiency: " << efficiency << ", purity: " << purity << " bin_num: " << bin_num << " bin_width: " << bin_width << endl;
     }
 
     // Zmumu (PU200) pt^2
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(purity, efficiency) = pv_reco(tree_zmumu, bin_num, true);
+        tie(purity, efficiency, bin_width) = pv_reco(tree_zmumu, bin_num, true);
         outFile_zmumu_pt2 << efficiency << " "  << purity << endl;
 
-        cout << "[Zmumu PU200 pt^2] efficiency: " << efficiency << ", purity: " << purity << endl;
+        cout << "[Zmumu PU200 pt^2] efficiency: " << efficiency << ", purity: " << purity << " bin_num: " << bin_num << " bin_width: " << bin_width << endl;
     }
 
     // Zmumu (PU140)
@@ -209,18 +210,18 @@ void purity_efficiency() {
     TFile *file_zmumu_pu140 = new TFile(fullPath_zmumu_pu140.c_str());
     TTree *tree_zmumu_pu140 = dynamic_cast<TTree*>(file_zmumu_pu140->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(purity, efficiency) = pv_reco(tree_zmumu_pu140, bin_num, false);
+        tie(purity, efficiency, bin_width) = pv_reco(tree_zmumu_pu140, bin_num, false);
         outFile_zmumu140 << efficiency << " "  << purity << endl;
 
-        cout << "[Zmumu PU140] efficiency: " << efficiency << ", purity: " << purity << endl;
+        cout << "[Zmumu PU140] efficiency: " << efficiency << ", purity: " << purity << " bin_num: " << bin_num << " bin_width: " << bin_width << endl;
     }
 
     // Zmumu (PU140) pt^2
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(purity, efficiency) = pv_reco(tree_zmumu_pu140, bin_num, true);
+        tie(purity, efficiency, bin_width) = pv_reco(tree_zmumu_pu140, bin_num, true);
         outFile_zmumu140_pt2 << efficiency << " "  << purity << endl;
 
-        cout << "[Zmumu PU140 pt^2] efficiency: " << efficiency << ", purity: " << purity << endl;
+        cout << "[Zmumu PU140 pt^2] efficiency: " << efficiency << ", purity: " << purity << " bin_num: " << bin_num << " bin_width: " << bin_width << endl;
     }
 
     // Zmumu (PU0)
@@ -228,18 +229,18 @@ void purity_efficiency() {
     TFile *file_zmumu_pu0 = new TFile(fullPath_zmumu_pu0.c_str());
     TTree *tree_zmumu_pu0 = dynamic_cast<TTree*>(file_zmumu_pu0->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(purity, efficiency) = pv_reco(tree_zmumu_pu0, bin_num, false);
+        tie(purity, efficiency, bin_width) = pv_reco(tree_zmumu_pu0, bin_num, false);
         outFile_zmumu0 << efficiency << " "  << purity << endl;
 
-        cout << "[Zmumu PU0] efficiency: " << efficiency << ", purity: " << purity << endl;
+        cout << "[Zmumu PU0] efficiency: " << efficiency << ", purity: " << purity << " bin_num: " << bin_num << " bin_width: " << bin_width << endl;
     }
 
     // Zmumu (PU0) pt^2
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(purity, efficiency) = pv_reco(tree_zmumu_pu0, bin_num, true);
+        tie(purity, efficiency, bin_width) = pv_reco(tree_zmumu_pu0, bin_num, true);
         outFile_zmumu0_pt2 << efficiency << " "  << purity << endl;
 
-        cout << "[Zmumu PU0 pt^2] efficiency: " << efficiency << ", purity: " << purity << endl;
+        cout << "[Zmumu PU0 pt^2] efficiency: " << efficiency << ", purity: " << purity << " bin_num: " << bin_num << " bin_width: " << bin_width << endl;
     }
 
     outFile_ttbar.close();

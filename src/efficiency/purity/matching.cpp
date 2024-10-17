@@ -20,7 +20,6 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     vector<float> *id_trk_z0 = nullptr;
     vector<float> *id_trk_phi = nullptr;
     vector<float> *id_trk_eta = nullptr;
-    vector<float> *id_trk_theta = nullptr;
     vector<int> *vxp_nTracks = nullptr;
     vector<int> *vxp_type = nullptr;
     vector<float> *vxp_z = nullptr;
@@ -28,7 +27,6 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     vector<double> *truth_phi = nullptr;
     vector<double> *truth_eta = nullptr;
     vector<double> *truth_charge = nullptr;
-    vector<double> *truth_rapidity = nullptr;
 
     double bin_width;
 
@@ -36,11 +34,15 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     int num_pv_tracks_within_bin = 0; // 再構成で求めたPVの範囲内にある、かつマッチングが取れたトラックの数
     int num_tracks_within_bin_width = 0; // 再構成で求めたPVの範囲内にあるトラックの数
 
+    /*
+        purity =  num_pv_tracks_within_bin / num_tracks_within_bin_width
+        efficiency = num_pv_tracks_within_bin / num_pv_tracks
+    */
+
     tree->SetBranchAddress("id_trk_pt", &id_trk_pt);
     tree->SetBranchAddress("id_trk_z0", &id_trk_z0);
     tree->SetBranchAddress("id_trk_phi", &id_trk_phi);
     tree->SetBranchAddress("id_trk_eta", &id_trk_eta);
-    tree->SetBranchAddress("id_trk_theta", &id_trk_theta);
     tree->SetBranchAddress("vxp_type", &vxp_type);
     tree->SetBranchAddress("vxp_z", &vxp_z);
     tree->SetBranchAddress("vxp_nTracks", &vxp_nTracks);
@@ -48,10 +50,8 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     tree->SetBranchAddress("truth_phi", &truth_phi);
     tree->SetBranchAddress("truth_charge", &truth_charge);
     tree->SetBranchAddress("truth_eta", &truth_eta);
-    tree->SetBranchAddress("truth_rapidity", &truth_rapidity);
 
     int entries = tree->GetEntries();
-    int successful_entries = 0;
 
     // マッチング用のビン幅を設定
     const double phi_bin_width = 0.02; // phiのビン幅
@@ -75,7 +75,8 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
             truth_map[make_pair(phi_bin, eta_bin)].push_back(j);
         }
 
-        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -200, 200);
+        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
+
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
             tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
         }
@@ -91,12 +92,12 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
             if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                 num_tracks_within_bin_width++;
             }
-
             // マッチング
             int phi_bin = static_cast<int>((id_trk_phi->at(i) + M_PI) / phi_bin_width);
             int eta_bin = static_cast<int>((id_trk_eta->at(i) + 5.0) / eta_bin_width);
 
             bool matched = false;
+            // 周囲のビンも含めて探索
             for (int dphi = -1; dphi <= 1; ++dphi) {
                 for (int deta = -1; deta <= 1; ++deta) {
                     int neighbor_phi_bin = phi_bin + dphi;
@@ -104,9 +105,10 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
                     auto key = make_pair(neighbor_phi_bin, neighbor_eta_bin);
                     if (truth_map.find(key) != truth_map.end()) {
                         for (size_t idx : truth_map[key]) {
+                            // マッチング条件
                             if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.0025 &&
                                 abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.0025 &&
-                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.2) {
+                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.1) {
                                 num_pv_tracks++;
                                 if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                                     num_pv_tracks_within_bin++;
@@ -121,11 +123,6 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
                 if (matched) break;
             }
         }
-
-        if (num_pv_tracks_within_bin != 0) {
-            successful_entries++;
-        }
-
         total_purity += static_cast<double>(num_pv_tracks_within_bin) / num_tracks_within_bin_width;
         total_efficiency += static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
         num_pv_tracks = 0;
@@ -135,9 +132,6 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
 
     double purity = total_purity / entries;
     double efficiency = total_efficiency / entries;
-    int failed_entries = entries - successful_entries;
-
-    cout << "efficiency: " << efficiency << ", purity: " << purity << ", total_efficiency = " << total_efficiency << ", failed_entries: " << failed_entries << ", bin_width = " << bin_width << endl;
 
     return make_tuple(purity, efficiency);
 }
@@ -187,14 +181,16 @@ void ttbar_mc200_simple() {
     string outputDir = string(basePath) + "/" + string(dataDir) + "/";
     ofstream outFile_ttbar(outputDir + "ttbar_mc200.txt");
 
-    int max_bin_num = 4096;
-    int min_bin_num = 128;
+    int max_bin_num = 8192;
+    int min_bin_num = 256;
 
     TFile *file = new TFile(fullPath.c_str());
     TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
         tie(purity, efficiency) = pv_reco(tree, bin_num);
         outFile_ttbar << efficiency << " "  << purity << endl;
+
+        cout << "efficiency: " << efficiency << ", purity: " << purity << endl;
     }
 
     outFile_ttbar.close();

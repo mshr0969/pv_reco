@@ -68,7 +68,7 @@ void purity_efficiency_plot() {
     g8->SetLineStyle(2);
 
     TCanvas *c1 = new TCanvas("c1", "", 850, 600);
-    TH1F *frame = c1->DrawFrame(0.2, 0.1, 1, 0.8); // x: 0～1, y: 0～1 の範囲を設定
+    TH1F *frame = c1->DrawFrame(0.2, 0.0, 1, 0.8); // x: 0～1, y: 0～1 の範囲を設定
     frame->SetXTitle("efficiency");
     frame->SetYTitle("purity");
     frame->GetXaxis()->SetTitleSize(0.04);

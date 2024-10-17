@@ -67,7 +67,7 @@ tuple<vector<vector<double>>, double, double> pv_reco(TTree *tree, int bin_num) 
             truth_map[make_pair(phi_bin, eta_bin)].push_back(j);
         }
 
-        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
+        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -200, 200);
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
             tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
         }
@@ -169,7 +169,7 @@ tuple<vector<vector<double>>, double, double> pv_reco_pt2(TTree *tree, int bin_n
             truth_map[make_pair(phi_bin, eta_bin)].push_back(j);
         }
 
-        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
+        TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -200, 200);
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
             tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i) * id_trk_pt->at(i));
         }
@@ -237,8 +237,8 @@ void save_pu200() {
     ofstream outFile_zmumu_0(outputDir + "zmumu_0_efficiency.txt");
     ofstream outFile_zmumu_0_pt2(outputDir + "zmumu_0_efficiency_pt2.txt");
 
-    int max_bin_num = 65536;
-    int min_bin_num = 256;
+    int max_bin_num = 8192;
+    int min_bin_num = 128;
 
     // ttbar (PU200)
     string fullPath = string(basePath) + "/" + string(mcRootFilePath_pu200_ttbar);
