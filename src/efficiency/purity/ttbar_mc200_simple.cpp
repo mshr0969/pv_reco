@@ -126,6 +126,13 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
             successful_entries++;
         }
 
+        if (num_tracks_within_bin_width == 0 || num_pv_tracks_within_bin == 0) {
+            num_pv_tracks = 0;
+            num_pv_tracks_within_bin = 0;
+            num_tracks_within_bin_width = 0;
+            continue;
+        }
+
         total_purity += static_cast<double>(num_pv_tracks_within_bin) / num_tracks_within_bin_width;
         total_efficiency += static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
         num_pv_tracks = 0;
