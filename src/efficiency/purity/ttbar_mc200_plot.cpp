@@ -85,7 +85,7 @@ void ttbar_mc200_plot() {
     latex.DrawLatex(0.2, 0.5, "ATLAS");
 
     latex.SetTextFont(42); // 標準のフォントスタイルに戻す
-    latex.DrawLatex(0.32, 0.5, "Simulation Work in Progress");
+    latex.DrawLatex(0.32, 0.5, "Simulation Work In Progress");
     latex.DrawLatex(0.2, 0.45, "#sqrt{s} = 14 TeV");
 
     // 1ページ目の PDF を出力
