@@ -116,7 +116,7 @@ tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
                             // マッチング条件
                             if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.0025 &&
                                 abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.0025 &&
-                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.2  ) { 
+                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.2 ) {
                                 num_pv_tracks++;
                                 if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                                     num_pv_tracks_within_bin++;
