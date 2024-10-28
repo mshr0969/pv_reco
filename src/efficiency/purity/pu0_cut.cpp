@@ -11,16 +11,17 @@
 using namespace std;
 
 const char* basePath = getenv("WORKDIR");
-const char* mcTtbarFilePath = getenv("MC_DATA_DIR_PU200_TTBAR");
+const char* mcFilePath = getenv("MC_DATA_DIR_PU0_Z_MUMU");
 const char* dir = "efficiency/purity";
 const char* dataDir = "src/efficiency/data";
 
-tuple<double, double> pv_reco(TTree *tree, int bin_num) {
+void pv_reco(TTree *tree, int bin_num) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
     vector<float> *id_trk_phi = nullptr;
     vector<float> *id_trk_eta = nullptr;
     vector<float> *id_trk_theta = nullptr;
+    vector<float> *id_trk_d0 = nullptr;
     vector<int> *vxp_nTracks = nullptr;
     vector<int> *vxp_type = nullptr;
     vector<float> *vxp_z = nullptr;
@@ -42,6 +43,7 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     tree->SetBranchAddress("id_trk_phi", &id_trk_phi);
     tree->SetBranchAddress("id_trk_eta", &id_trk_eta);
     tree->SetBranchAddress("id_trk_theta", &id_trk_theta);
+    tree->SetBranchAddress("id_trk_d0", &id_trk_d0);
     tree->SetBranchAddress("vxp_type", &vxp_type);
     tree->SetBranchAddress("vxp_z", &vxp_z);
     tree->SetBranchAddress("vxp_nTracks", &vxp_nTracks);
@@ -53,14 +55,16 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
     tree->SetBranchAddress("true_vxp_z", &true_vxp_z);
 
     int entries = tree->GetEntries();
-    int successful_entries = 0;
 
     // マッチング用のビン幅を設定
     const double phi_bin_width = 0.02; // phiのビン幅
     const double eta_bin_width = 0.02; // etaのビン幅
 
-    double total_purity = 0.0;
-    double total_efficiency = 0.0;
+    TH1D *unmatched_pt_hist = new TH1D("unmatched_pt", "pT of Unmatched Tracks", 128, 0, 10000);
+    TH1D *unmatched_eta_hist = new TH1D("unmatched_eta", "Eta of Unmatched Tracks", 128, -5, 5);
+    TH1D *unmatched_phi_hist = new TH1D("unmatched_phi", "Phi of Unmatched Tracks", 64, -4, 4);
+    TH1D *unmatched_z0_hist = new TH1D("unmatched_z0", "z0 of Unmatched Tracks", 128, -200, 200);
+    TH1D *unmatched_d0_hist = new TH1D("unmatched_d0", "d0 of Unmatched Tracks", 128, -2, 2);
 
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
@@ -89,10 +93,10 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
 
         delete tempHist;
 
-        // primary interactionは、最初の100個のうち、最もユニーク数が多いものとする
+        // primary interactionは、最もユニーク数が多いものとする
         double primary_vertex;
         vector<double> truth_z;
-        for (size_t i = 0; i < 100; ++i) {
+        for (size_t i = 0; i < 10; ++i) {
             truth_z.push_back(true_vxp_z->at(i));
         }
         primary_vertex = *max_element(truth_z.begin(), truth_z.end());
@@ -116,8 +120,7 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
                         for (size_t idx : truth_map[key]) {
                             if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.0025 &&
                                 abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.0025 &&
-                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.2 &&
-                                abs(id_trk_z0->at(i) - primary_vertex) < 0.2) {
+                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.2 ) {
                                 num_pv_tracks++;
                                 if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                                     num_pv_tracks_within_bin++;
@@ -131,91 +134,45 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
                 }
                 if (matched) break;
             }
-        }
 
-        if (num_pv_tracks_within_bin != 0) {
-            successful_entries++;
+            if (!matched) {
+                unmatched_pt_hist->Fill(id_trk_pt->at(i));
+                unmatched_eta_hist->Fill(id_trk_eta->at(i));
+                unmatched_phi_hist->Fill(id_trk_phi->at(i));
+                unmatched_z0_hist->Fill(id_trk_z0->at(i));
+                unmatched_d0_hist->Fill(id_trk_d0->at(i));
+            }
         }
-
-        if (num_tracks_within_bin_width == 0 || num_pv_tracks_within_bin == 0) {
-            num_pv_tracks = 0;
-            num_pv_tracks_within_bin = 0;
-            num_tracks_within_bin_width = 0;
-            continue;
-        }
-
-        total_purity += static_cast<double>(num_pv_tracks_within_bin) / num_tracks_within_bin_width;
-        total_efficiency += static_cast<double>(num_pv_tracks_within_bin) / num_pv_tracks;
-        num_pv_tracks = 0;
-        num_pv_tracks_within_bin = 0;
-        num_tracks_within_bin_width = 0;
     }
 
-    double purity = total_purity / entries;
-    double efficiency = total_efficiency / entries;
-    int failed_entries = entries - successful_entries;
+    TCanvas *c1 = new TCanvas("c1", "Unmatched Tracks", 1000, 800);
+    c1->Divide(3, 2);
 
-    cout << "efficiency: " << efficiency << ", purity: " << purity << ", total_efficiency = " << total_efficiency << ", failed_entries: " << failed_entries << ", bin_width = " << bin_width << endl;
+    c1->cd(1);
+    unmatched_pt_hist->Draw();
+    c1->cd(2);
+    unmatched_eta_hist->Draw();
+    c1->cd(3);
+    unmatched_phi_hist->Draw();
+    c1->cd(4);
+    unmatched_z0_hist->Draw();
+    c1->cd(5);
+    unmatched_d0_hist->Draw();
 
-    return make_tuple(purity, efficiency);
+    c1->SaveAs("output/efficiency/purity/unmatched_tracks_distributions.pdf");
+
+    delete unmatched_pt_hist;
+    delete unmatched_eta_hist;
+    delete unmatched_phi_hist;
+    delete unmatched_z0_hist;
+    delete c1;
 }
 
-
-void run3_plot() {
-    string txtDir = string(basePath)+ "/" + string(dataDir) + "/";
-    // TGraph *g1 = new TGraph((txtDir + "run3_ttbar_purity_ftf.txt").c_str());
-    TGraph *g1 = new TGraph((txtDir + "ttbar_mc200.txt").c_str());
-    g1->SetTitle("");
-    g1->SetMarkerColor(kBlue);
-    g1->SetLineColor(kBlue);
-    g1->SetMarkerStyle(21);
-    g1->SetLineWidth(4);
-
-    TCanvas *c1 = new TCanvas("c1", "", 850, 600);
-    g1->GetXaxis()->SetTitle("efficiency");
-    g1->GetYaxis()->SetTitle("purity");
-    g1->GetXaxis()->SetTitleSize(0.04);
-    g1->GetYaxis()->SetTitleSize(0.04);
-    g1->GetXaxis()->SetLabelSize(0.04);
-    g1->GetYaxis()->SetLabelSize(0.04);
-    g1->Draw("ALP");
-
-    // ATLASラベルを追加
-    TLatex latex;
-    latex.SetNDC();
-    latex.SetTextFont(72); // ATLASフォントスタイル
-    latex.SetTextSize(0.04);
-    latex.DrawLatex(0.2, 0.5, "ATLAS");
-
-    latex.SetTextFont(42); // 標準のフォントスタイルに戻す
-    latex.DrawLatex(0.32, 0.5, "Simulation Work In Progress");
-    latex.DrawLatex(0.2, 0.45, "#sqrt{s} = 14 TeV");
-
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/ttbar200.pdf").c_str());
-}
-
-
-void ttbar_mc200_simple() {
-    string fullPath = string(basePath) + "/" + string(mcTtbarFilePath);
-
-    vector<double> primary_vertexies;
-    double purity;
-    double efficiency;
-
-    string outputDir = string(basePath) + "/" + string(dataDir) + "/";
-    ofstream outFile_ttbar(outputDir + "ttbar_mc200.txt");
-
-    int max_bin_num = 4096;
-    int min_bin_num = 128;
+void pu0_cut() {
+    string fullPath = string(basePath) + "/" + string(mcFilePath);
 
     TFile *file = new TFile(fullPath.c_str());
     TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
-    for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
-        tie(purity, efficiency) = pv_reco(tree, bin_num);
-        outFile_ttbar << efficiency << " "  << purity << endl;
-    }
+    pv_reco(tree, 4096);
 
-    outFile_ttbar.close();
-
-    run3_plot();
 }

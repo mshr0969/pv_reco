@@ -31,6 +31,7 @@ tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
     vector<double> *truth_phi = nullptr;
     vector<double> *truth_eta = nullptr;
     vector<double> *truth_charge = nullptr;
+    vector<double> *true_vxp_z = nullptr;
 
     double bin_width;
 
@@ -54,6 +55,7 @@ tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
     tree->SetBranchAddress("truth_phi", &truth_phi);
     tree->SetBranchAddress("truth_charge", &truth_charge);
     tree->SetBranchAddress("truth_eta", &truth_eta);
+    tree->SetBranchAddress("true_vxp_z", &true_vxp_z);
 
     int entries = tree->GetEntries();
 
@@ -80,6 +82,18 @@ tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
         }
 
         TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -200, 200);
+
+        // primary interactionは、最初の100個のうち、最もユニーク数が多いものとする
+        double primary_vertex;
+        vector<double> truth_z;
+        if (true_vxp_z != nullptr) {
+            for (size_t i = 0; i < 100 && i < true_vxp_z->size(); ++i) {
+                truth_z.push_back(true_vxp_z->at(i));
+            }
+        } else {
+            cout << "true_vxp_z is nullptr" << endl;
+        }
+        primary_vertex = *max_element(truth_z.begin(), truth_z.end());
 
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
             if (is_pt2) {
@@ -116,7 +130,8 @@ tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
                             // マッチング条件
                             if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.0025 &&
                                 abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.0025 &&
-                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.2 ) {
+                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.2 &&
+                                abs(id_trk_z0->at(i) - primary_vertex) < 0.1) {
                                 num_pv_tracks++;
                                 if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                                     num_pv_tracks_within_bin++;

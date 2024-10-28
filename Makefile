@@ -55,3 +55,6 @@ purity_efficiency:
 
 purity_efficiency_plot:
 	root -l 'src/efficiency/purity/purity_efficiency_plot.cpp'
+
+pu0_cut:
+	root -l 'src/efficiency/purity/pu0_cut.cpp'
