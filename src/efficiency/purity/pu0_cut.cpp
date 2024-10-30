@@ -124,9 +124,9 @@ void pv_reco(TTree *tree, int bin_num) {
                                 num_pv_tracks++;
                                 if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                                     num_pv_tracks_within_bin++;
+                                    matched = true;
+                                    break;
                                 }
-                                matched = true;
-                                break;
                             }
                         }
                     }
@@ -135,7 +135,8 @@ void pv_reco(TTree *tree, int bin_num) {
                 if (matched) break;
             }
 
-            if (!matched) {
+            // binの幅に入っていて、マッチングが取れなかったトラックをプロット
+            if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge && !matched) {
                 unmatched_pt_hist->Fill(id_trk_pt->at(i));
                 unmatched_eta_hist->Fill(id_trk_eta->at(i));
                 unmatched_phi_hist->Fill(id_trk_phi->at(i));
@@ -159,7 +160,7 @@ void pv_reco(TTree *tree, int bin_num) {
     c1->cd(5);
     unmatched_d0_hist->Draw();
 
-    c1->SaveAs("output/efficiency/purity/unmatched_tracks_distributions.pdf");
+    c1->SaveAs("output/efficiency/purity/unmatched_tracks_distributions_wide.pdf");
 
     delete unmatched_pt_hist;
     delete unmatched_eta_hist;
@@ -173,6 +174,6 @@ void pu0_cut() {
 
     TFile *file = new TFile(fullPath.c_str());
     TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
-    pv_reco(tree, 4096);
+    pv_reco(tree, 128);
 
 }
