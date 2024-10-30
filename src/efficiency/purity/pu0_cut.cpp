@@ -15,7 +15,7 @@ const char* mcFilePath = getenv("MC_DATA_DIR_PU0_Z_MUMU");
 const char* dir = "efficiency/purity";
 const char* dataDir = "src/efficiency/data";
 
-void pv_reco(TTree *tree, int bin_num) {
+void pv_reco(TTree *tree, int bin_num, const string &width) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
     vector<float> *id_trk_phi = nullptr;
@@ -63,7 +63,7 @@ void pv_reco(TTree *tree, int bin_num) {
     TH1D *unmatched_pt_hist = new TH1D("unmatched_pt", "pT of Unmatched Tracks", 128, 0, 10000);
     TH1D *unmatched_eta_hist = new TH1D("unmatched_eta", "Eta of Unmatched Tracks", 128, -5, 5);
     TH1D *unmatched_phi_hist = new TH1D("unmatched_phi", "Phi of Unmatched Tracks", 64, -4, 4);
-    TH1D *unmatched_z0_hist = new TH1D("unmatched_z0", "z0 of Unmatched Tracks", 128, -200, 200);
+    TH1D *unmatched_z0_hist = new TH1D("unmatched_z0 and primary vertex z difference", "unmatched_z0 and primary vertex z difference", 128, -200, 200);
     TH1D *unmatched_d0_hist = new TH1D("unmatched_d0", "d0 of Unmatched Tracks", 128, -2, 2);
 
     for (int entry = 0; entry < entries; entry++) {
@@ -140,7 +140,7 @@ void pv_reco(TTree *tree, int bin_num) {
                 unmatched_pt_hist->Fill(id_trk_pt->at(i));
                 unmatched_eta_hist->Fill(id_trk_eta->at(i));
                 unmatched_phi_hist->Fill(id_trk_phi->at(i));
-                unmatched_z0_hist->Fill(id_trk_z0->at(i));
+                unmatched_z0_hist->Fill(abs(id_trk_z0->at(i) - primary_vertex));
                 unmatched_d0_hist->Fill(id_trk_d0->at(i));
             }
         }
@@ -160,7 +160,7 @@ void pv_reco(TTree *tree, int bin_num) {
     c1->cd(5);
     unmatched_d0_hist->Draw();
 
-    c1->SaveAs("output/efficiency/purity/unmatched_tracks_distributions_wide.pdf");
+    c1->SaveAs(("output/efficiency/purity/unmatched_tracks_distributions_" + width + ".pdf").c_str());
 
     delete unmatched_pt_hist;
     delete unmatched_eta_hist;
@@ -174,6 +174,6 @@ void pu0_cut() {
 
     TFile *file = new TFile(fullPath.c_str());
     TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
-    pv_reco(tree, 128);
-
+    // pv_reco(tree, 4096, "narrow");
+    pv_reco(tree, 128, "wide");
 }
