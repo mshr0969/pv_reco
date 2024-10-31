@@ -67,7 +67,7 @@ void pv_reco(TTree *tree, int bin_num, const string &width) {
     TH1D *unmatched_pt_hist = new TH1D("unmatched_pt", "pT of Unmatched Tracks", 128, 0, 10000);
     TH1D *unmatched_eta_hist = new TH1D("unmatched_eta", "Eta of Unmatched Tracks", 128, -5, 5);
     TH1D *unmatched_phi_hist = new TH1D("unmatched_phi", "Phi of Unmatched Tracks", 64, -4, 4);
-    TH1D *unmatched_z0_hist = new TH1D("unmatched_z0 and primary vertex z difference", "unmatched_z0 and primary vertex z difference", 128, -200, 200);
+    TH1D *unmatched_z0_hist = new TH1D("unmathched_z0", "z0 of Unmatched Trakcs", 128, -200, 200);
     TH1D *unmatched_d0_hist = new TH1D("unmatched_d0", "d0 of Unmatched Tracks", 128, -2, 2);
 
     for (int entry = 0; entry < entries; entry++) {
@@ -106,6 +106,11 @@ void pv_reco(TTree *tree, int bin_num, const string &width) {
         primary_vertex = *max_element(truth_z.begin(), truth_z.end());
 
         for (size_t i = 0; i < id_trk_z0->size(); ++i) {
+            // pt<1000MeV/cのトラックは除く
+            if (id_trk_pt->at(i) < 1000) {
+                continue;
+            }
+
             if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                 num_tracks_within_bin_width++;
             }
@@ -144,7 +149,7 @@ void pv_reco(TTree *tree, int bin_num, const string &width) {
                 unmatched_pt_hist->Fill(id_trk_pt->at(i));
                 unmatched_eta_hist->Fill(id_trk_eta->at(i));
                 unmatched_phi_hist->Fill(id_trk_phi->at(i));
-                unmatched_z0_hist->Fill(abs(id_trk_z0->at(i) - primary_vertex));
+                unmatched_z0_hist->Fill(id_trk_z0->at(i));
                 unmatched_d0_hist->Fill(id_trk_d0->at(i));
             }
         }
