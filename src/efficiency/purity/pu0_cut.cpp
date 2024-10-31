@@ -30,6 +30,8 @@ void pv_reco(TTree *tree, int bin_num, const string &width) {
     vector<double> *truth_eta = nullptr;
     vector<double> *truth_charge = nullptr;
     vector<double> *truth_rapidity = nullptr;
+    vector<double> *true_vxp_x = nullptr;
+    vector<double> *true_vxp_y = nullptr;
     vector<double> *true_vxp_z = nullptr;
 
     double bin_width;
@@ -52,6 +54,8 @@ void pv_reco(TTree *tree, int bin_num, const string &width) {
     tree->SetBranchAddress("truth_charge", &truth_charge);
     tree->SetBranchAddress("truth_eta", &truth_eta);
     tree->SetBranchAddress("truth_rapidity", &truth_rapidity);
+    tree->SetBranchAddress("true_vxp_x", &true_vxp_x);
+    tree->SetBranchAddress("true_vxp_y", &true_vxp_y);
     tree->SetBranchAddress("true_vxp_z", &true_vxp_z);
 
     int entries = tree->GetEntries();

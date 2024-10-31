@@ -11,7 +11,8 @@
 using namespace std;
 
 const char* basePath = getenv("WORKDIR");
-const char* mcTtbarFilePath = getenv("MC_DATA_DIR_PU200_TTBAR");
+// const char* mcTtbarFilePath = getenv("MC_DATA_DIR_PU200_TTBAR");
+const char* mcTtbarFilePath = getenv("MC_DATA_DIR_PU0_Z_MUMU");
 const char* dir = "efficiency/purity";
 const char* dataDir = "src/efficiency/data";
 
@@ -90,14 +91,18 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
         delete tempHist;
 
         // primary interactionは、最初の100個のうち、最もユニーク数が多いものとする
-        double primary_vertex;
-        vector<double> truth_z;
-        for (size_t i = 0; i < 100; ++i) {
-            truth_z.push_back(true_vxp_z->at(i));
-        }
-        primary_vertex = *max_element(truth_z.begin(), truth_z.end());
+        // double primary_vertex;
+        // vector<double> truth_z;
+        // for (size_t i = 0; i < 100; ++i) {
+        //     truth_z.push_back(true_vxp_z->at(i));
+        // }
+        // primary_vertex = *max_element(truth_z.begin(), truth_z.end());
 
         for (size_t i = 0; i < id_trk_z0->size(); ++i) {
+            // etaが2を超えるトラックは除く
+            if (abs(id_trk_eta->at(i)) > 2.0) {
+                continue;
+            }
             if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                 num_tracks_within_bin_width++;
             }
@@ -116,8 +121,7 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
                         for (size_t idx : truth_map[key]) {
                             if (abs(id_trk_phi->at(i) - truth_phi->at(idx)) < 0.0025 &&
                                 abs(id_trk_eta->at(i) - truth_eta->at(idx)) < 0.0025 &&
-                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.2 &&
-                                abs(id_trk_z0->at(i) - primary_vertex) < 0.2) {
+                                abs(1.0 / id_trk_pt->at(i) - 1.0 / truth_pt->at(idx)) / (1.0 / truth_pt->at(idx)) < 0.2 ) {
                                 num_pv_tracks++;
                                 if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                                     num_pv_tracks_within_bin++;
@@ -164,7 +168,7 @@ tuple<double, double> pv_reco(TTree *tree, int bin_num) {
 void run3_plot() {
     string txtDir = string(basePath)+ "/" + string(dataDir) + "/";
     // TGraph *g1 = new TGraph((txtDir + "run3_ttbar_purity_ftf.txt").c_str());
-    TGraph *g1 = new TGraph((txtDir + "ttbar_mc200.txt").c_str());
+    TGraph *g1 = new TGraph((txtDir + "zmumu_pu0.txt").c_str());
     g1->SetTitle("");
     g1->SetMarkerColor(kBlue);
     g1->SetLineColor(kBlue);
@@ -191,7 +195,7 @@ void run3_plot() {
     latex.DrawLatex(0.32, 0.5, "Simulation Work In Progress");
     latex.DrawLatex(0.2, 0.45, "#sqrt{s} = 14 TeV");
 
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/ttbar200.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/zmumu_pu0.pdf").c_str());
 }
 
 
@@ -203,7 +207,7 @@ void ttbar_mc200_simple() {
     double efficiency;
 
     string outputDir = string(basePath) + "/" + string(dataDir) + "/";
-    ofstream outFile_ttbar(outputDir + "ttbar_mc200.txt");
+    ofstream outFile_ttbar(outputDir + "zmumu_pu0.txt");
 
     int max_bin_num = 4096;
     int min_bin_num = 128;

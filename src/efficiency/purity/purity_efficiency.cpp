@@ -111,6 +111,10 @@ tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
         delete tempHist;
 
         for (size_t i = 0; i < id_trk_z0->size(); ++i) {
+            // etaが2.5より大きい場合は除く
+            if (abs(id_trk_eta->at(i)) > 2.5) {
+                continue;
+            }
             if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                 num_tracks_within_bin_width++;
             }
