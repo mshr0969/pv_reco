@@ -24,6 +24,7 @@ tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
     vector<float> *id_trk_z0 = nullptr;
     vector<float> *id_trk_phi = nullptr;
     vector<float> *id_trk_eta = nullptr;
+    vector<float> *id_trk_d0 = nullptr;
     vector<int> *vxp_nTracks = nullptr;
     vector<int> *vxp_type = nullptr;
     vector<float> *vxp_z = nullptr;
@@ -48,6 +49,7 @@ tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
     tree->SetBranchAddress("id_trk_z0", &id_trk_z0);
     tree->SetBranchAddress("id_trk_phi", &id_trk_phi);
     tree->SetBranchAddress("id_trk_eta", &id_trk_eta);
+    tree->SetBranchAddress("id_trk_d0", &id_trk_d0);
     tree->SetBranchAddress("vxp_type", &vxp_type);
     tree->SetBranchAddress("vxp_z", &vxp_z);
     tree->SetBranchAddress("vxp_nTracks", &vxp_nTracks);
@@ -112,7 +114,17 @@ tuple<double, double, double> pv_reco(TTree *tree, int bin_num, bool is_pt2) {
 
         for (size_t i = 0; i < id_trk_z0->size(); ++i) {
             // etaが2.5より大きい場合は除く
-            if (abs(id_trk_eta->at(i)) > 2.5) {
+            if (abs(id_trk_eta->at(i)) > 2.0) {
+                continue;
+            }
+
+            // ptが1GeV未満のトラックは除く
+            if (id_trk_pt->at(i) < 1000) {
+                continue;
+            }
+
+            // d0が0.1mmより大きい場合は除く
+            if (abs(id_trk_d0->at(i)) > 0.1) {
                 continue;
             }
             if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {

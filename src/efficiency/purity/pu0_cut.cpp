@@ -3,6 +3,7 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <TH1D.h>
+#include <TH2D.h>
 #include <TCanvas.h>
 #include <TGraph.h>
 #include <TLatex.h>
@@ -66,9 +67,18 @@ void pv_reco(TTree *tree, int bin_num, const string &width) {
 
     TH1D *unmatched_pt_hist = new TH1D("unmatched_pt", "pT of Unmatched Tracks", 128, 0, 10000);
     TH1D *unmatched_eta_hist = new TH1D("unmatched_eta", "Eta of Unmatched Tracks", 128, -5, 5);
-    TH1D *unmatched_phi_hist = new TH1D("unmatched_phi", "Phi of Unmatched Tracks", 64, -4, 4);
     TH1D *unmatched_z0_hist = new TH1D("unmathched_z0", "z0 of Unmatched Trakcs", 128, -200, 200);
-    TH1D *unmatched_d0_hist = new TH1D("unmatched_d0", "d0 of Unmatched Tracks", 128, -2, 2);
+    TH2D *unmatched_d0_pt_hist = new TH2D("unmatched_d0_pt", "d0 vs pT of Unmatched Tracks", 128, -0.5, 0.5, 128, 0, 10000);
+    TH2D *unmatched_d0_eta_hist = new TH2D("unmatched_d0_eta", "d0 vs Eta of Unmatched Tracks", 128, -0.5, 0.5, 128, -3, 3);
+    TH2D *unmatched_eta_pt_hist = new TH2D("unmatched_eta_pt", "Eta vs pT of Unmatched Tracks", 128, -5, 5, 128, 0, 10000);
+
+    // mathed
+    TH1D *matched_pt_hist = new TH1D("matched_pt", "pT of Matched Tracks", 128, 0, 10000);
+    TH1D *matched_eta_hist = new TH1D("matched_eta", "Eta of Matched Tracks", 128, -5, 5);
+    TH1D *matched_z0_hist = new TH1D("matched_z0", "z0 of Matched Tracks", 128, -200, 200);
+    TH2D *matched_d0_pt_hist = new TH2D("matched_d0_pt", "d0 vs pT of Matched Tracks", 128, -0.5, 0.5, 128, 0, 10000);
+    TH2D *matched_d0_eta_hist = new TH2D("matched_d0_eta", "d0 vs Eta of Matched Tracks", 128, -0.5, 0.5, 128, -3, 3);
+    TH2D *matched_eta_pt_hist = new TH2D("matched_eta_pt", "Eta vs pT of Matched Tracks", 128, -5, 5, 128, 0, 10000);
 
     for (int entry = 0; entry < entries; entry++) {
         tree->GetEntry(entry);
@@ -106,10 +116,20 @@ void pv_reco(TTree *tree, int bin_num, const string &width) {
         primary_vertex = *max_element(truth_z.begin(), truth_z.end());
 
         for (size_t i = 0; i < id_trk_z0->size(); ++i) {
-            // pt<1000MeV/cのトラックは除く
-            if (id_trk_pt->at(i) < 1000) {
-                continue;
-            }
+            // // ptが1GeV未満のトラックは除く
+            // if (id_trk_pt->at(i) < 1000) {
+            //     continue;
+            // }
+
+            // // d0が0.4mmより大きい場合は除く
+            // if (abs(id_trk_d0->at(i)) > 0.4) {
+            //     continue;
+            // }
+
+            // // etaが2.5より大きいトラックは除く
+            // if (abs(id_trk_eta->at(i)) > 2.5) {
+            //     continue;
+            // }
 
             if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
                 num_tracks_within_bin_width++;
@@ -145,12 +165,22 @@ void pv_reco(TTree *tree, int bin_num, const string &width) {
             }
 
             // binの幅に入っていて、マッチングが取れなかったトラックをプロット
-            if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge && !matched) {
-                unmatched_pt_hist->Fill(id_trk_pt->at(i));
-                unmatched_eta_hist->Fill(id_trk_eta->at(i));
-                unmatched_phi_hist->Fill(id_trk_phi->at(i));
-                unmatched_z0_hist->Fill(id_trk_z0->at(i));
-                unmatched_d0_hist->Fill(id_trk_d0->at(i));
+            if (bin_low_edge < id_trk_z0->at(i) && id_trk_z0->at(i) < bin_up_edge) {
+                if (!matched){
+                    unmatched_pt_hist->Fill(id_trk_pt->at(i));
+                    unmatched_eta_hist->Fill(id_trk_eta->at(i));
+                    unmatched_z0_hist->Fill(id_trk_z0->at(i));
+                    unmatched_d0_pt_hist->Fill(id_trk_d0->at(i), id_trk_pt->at(i));
+                    unmatched_d0_eta_hist->Fill(id_trk_d0->at(i), id_trk_eta->at(i));
+                    unmatched_eta_pt_hist->Fill(id_trk_eta->at(i), id_trk_pt->at(i));
+                } else {
+                    matched_pt_hist->Fill(id_trk_pt->at(i));
+                    matched_eta_hist->Fill(id_trk_eta->at(i));
+                    matched_z0_hist->Fill(id_trk_z0->at(i));
+                    matched_d0_pt_hist->Fill(id_trk_d0->at(i), id_trk_pt->at(i));
+                    matched_d0_eta_hist->Fill(id_trk_d0->at(i), id_trk_eta->at(i));
+                    matched_eta_pt_hist->Fill(id_trk_eta->at(i), id_trk_pt->at(i));
+                }
             }
         }
     }
@@ -163,17 +193,36 @@ void pv_reco(TTree *tree, int bin_num, const string &width) {
     c1->cd(2);
     unmatched_eta_hist->Draw();
     c1->cd(3);
-    unmatched_phi_hist->Draw();
-    c1->cd(4);
     unmatched_z0_hist->Draw();
+    c1->cd(4);
+    unmatched_d0_pt_hist->Draw("colz");
+    c1->cd(6);
+    unmatched_d0_eta_hist->Draw("colz");
     c1->cd(5);
-    unmatched_d0_hist->Draw();
+    unmatched_eta_pt_hist->Draw("colz");
 
-    c1->SaveAs(("output/efficiency/purity/unmatched_tracks_distributions_" + width + ".pdf").c_str());
+    c1->SaveAs(("output/efficiency/purity/unmatched_tracks_distributions_" + width + ".pdf(").c_str());
+
+    TCanvas *c2 = new TCanvas("c2", "Matched Tracks", 1000, 800);
+    c2->Divide(3, 2);
+
+    c2->cd(1);
+    matched_pt_hist->Draw();
+    c2->cd(2);
+    matched_eta_hist->Draw();
+    c2->cd(3);
+    matched_z0_hist->Draw();
+    c2->cd(4);
+    matched_d0_pt_hist->Draw("colz");
+    c2->cd(6);
+    matched_d0_eta_hist->Draw("colz");
+    c2->cd(5);
+    matched_eta_pt_hist->Draw("colz");
+
+    c2->SaveAs(("output/efficiency/purity/unmatched_tracks_distributions_" + width + ".pdf)").c_str());
 
     delete unmatched_pt_hist;
     delete unmatched_eta_hist;
-    delete unmatched_phi_hist;
     delete unmatched_z0_hist;
     delete c1;
 }
