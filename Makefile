@@ -38,6 +38,9 @@ purity_ttbar200_plot:
 pileup:
 	root -l 'src/histo/pileup.cpp'
 
+event_display:
+	root -l 'src/histo/event_display.cpp'
+
 cut:
 	root -l 'src/efficiency/purity/cut.cpp'
 

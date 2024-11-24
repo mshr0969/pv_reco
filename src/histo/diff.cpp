@@ -10,7 +10,7 @@ using namespace std;
 
 const char* basePath = getenv("WORKDIR");
 const char* rootFilePath = getenv("REAL_DATA_DIR");
-const char* mcRootFilePath = getenv("MC_DATA_DIR");
+const char* mcRootFilePath = getenv("MC_DATA_DIR_PU200_TTBAR");
 const char* dir = "histo";
 
 void drawHist_beamspot(TTree *tree, bool is_ftf, string outputPath) {
@@ -170,6 +170,10 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
         if (track_num > 0) {
             h1->Fill(diff);
         }
+
+        if (diff > 2 || diff < -2) {
+            cout << "entry: " << entry << ", diff: " << diff << endl;
+        }
     }
 
     TCanvas *c1 = new TCanvas("c1", "", 1400, 600);
@@ -191,8 +195,8 @@ void diff(bool is_mc=false) {
         string fullPath = string(basePath) + "/" + string(mcRootFilePath);
         TFile *file = new TFile(fullPath.c_str());
         TTree *tree = dynamic_cast<TTree*>(file->Get("physics"));
-        drawHist(tree, false, string(basePath) + "/output/" + string(dir) + "/diff_mc.pdf(");
-        drawHist(tree, true, string(basePath) + "/output/" + string(dir) + "/diff_mc.pdf)");
+        drawHist(tree, false, string(basePath) + "/output/" + string(dir) + "/diff_mc.pdf");
+        // drawHist(tree, true, string(basePath) + "/output/" + string(dir) + "/diff_mc.pdf)");
     } else {
         string fullPath = string(basePath) + "/" + string(rootFilePath);
         TFile *file = new TFile(fullPath.c_str());
