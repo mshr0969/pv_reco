@@ -109,6 +109,7 @@ void drawHist_beamspot(TTree *tree, bool is_ftf, string outputPath) {
 void drawHist(TTree *tree, bool is_ftf, string outputPath) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
+    vector<float> *id_trk_eta = nullptr;
     vector<int> *vxp_type = nullptr;
     vector<float> *vxp_z = nullptr;
 
@@ -117,6 +118,7 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
 
     tree->SetBranchAddress(ptBranch, &id_trk_pt);
     tree->SetBranchAddress(z0Branch ,&id_trk_z0);
+    tree->SetBranchAddress("id_trk_eta", &id_trk_eta);
     tree->SetBranchAddress("vxp_type", &vxp_type);
     tree->SetBranchAddress("vxp_z", &vxp_z);
 
@@ -149,6 +151,9 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
         TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", 256, min_z0, max_z0);
 
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
+            if (id_trk_eta->at(i) > 3) {
+                continue;
+            }
             tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
         }
 

@@ -96,7 +96,7 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco_eta(TTree *tree, i
         TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
 
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
-            if (id_trk_eta->at(i) > 2.5) {
+            if (abs(id_trk_eta->at(i)) > 3) {
                 continue;
             }
             tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
@@ -186,7 +186,7 @@ void exclude_eta() {
 
     TLegend *legend = new TLegend(0.6, 0.4, 0.8, 0.55);
     legend->AddEntry(g1, "All tracks", "l");
-    legend->AddEntry(g2, "Excluded eta > 2.5", "l");
+    legend->AddEntry(g2, "Excluded eta > 3", "l");
     legend->SetBorderSize(0);
     legend->SetTextSize(0.03);
     legend->Draw();
@@ -200,5 +200,5 @@ void exclude_eta() {
     latex.DrawLatex(0.62, 0.25, "Simulation Internal");
     latex.DrawLatex(0.5, 0.2, "#sqrt{s} = 14 TeV");
 
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/exclude_eta25.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/exclude_eta3.pdf").c_str());
 }
