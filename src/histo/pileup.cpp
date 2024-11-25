@@ -35,7 +35,7 @@ void pileup() {
     int entries =  tree->GetEntries();
     cout << "Total number of events: " << entries << endl;
 
-    tree->GetEntry(1023);
+    tree->GetEntry(121);
     string title =  "";
     TH1D *h1 = new TH1D("h1", title.c_str(), 256, -200, 200);
     h1->SetFillColor(kBlue - 10);
