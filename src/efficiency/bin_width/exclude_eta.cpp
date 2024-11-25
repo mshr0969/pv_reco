@@ -72,9 +72,10 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, int b
     return make_tuple(reco_z0, primary_vertexies, bin_width);
 }
 
-tuple<vector<vector<double>>, vector<double>, double> pv_reco_exclude_highest_bin(TTree *tree, int bin_num) {
+tuple<vector<vector<double>>, vector<double>, double> pv_reco_eta(TTree *tree, int bin_num) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
+    vector<float> *id_trk_eta = nullptr;
     vector<float> *true_vxp_z = nullptr;
     vector<float> *vxp_z = nullptr;
     vector<vector<double>> reco_z0;
@@ -83,6 +84,7 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco_exclude_highest_bi
 
     tree->SetBranchAddress("id_trk_pt", &id_trk_pt);
     tree->SetBranchAddress("id_trk_z0", &id_trk_z0);
+    tree->SetBranchAddress("id_trk_eta", &id_trk_eta);
     tree->SetBranchAddress("vxp_z", &vxp_z);
     tree->SetBranchAddress("true_vxp_z", &true_vxp_z);
 
@@ -93,21 +95,11 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco_exclude_highest_bi
 
         TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
 
-        // Binごとの最大 pT を特定するマップを作成
-        map<int, double> bin_max_pt;
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
-            int bin = tempHist->GetXaxis()->FindBin(id_trk_z0->at(i));
-            if (bin_max_pt.find(bin) == bin_max_pt.end() || bin_max_pt[bin] < id_trk_pt->at(i)) {
-                bin_max_pt[bin] = id_trk_pt->at(i);
+            if (id_trk_eta->at(i) > 2.5) {
+                continue;
             }
-        }
-
-        // 最大 pT を除外しつつヒストグラムにデータを入力
-        for (size_t i = 0; i < id_trk_pt->size(); ++i) {
-            int bin = tempHist->GetXaxis()->FindBin(id_trk_z0->at(i));
-            if (id_trk_pt->at(i) != bin_max_pt[bin]) {
-                tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
-            }
+            tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
         }
 
         int maxBin = tempHist->GetMaximumBin();
@@ -118,7 +110,7 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco_exclude_highest_bi
 
         delete tempHist;
 
-        // Primary vertexの選択
+        // true_vxp_zの、初めから100個のうち、最も多いものをprimary vertexとする
         double primary_vertex;
         vector<double> truth_z;
         for (size_t i = 0; i < 100; ++i) {
@@ -132,7 +124,7 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco_exclude_highest_bi
 }
 
 
-void faketrack() {
+void exclude_eta() {
     vector<vector<double>> reco_z0, reco_z0_excluded;
     vector<double> primary_vertexies, primary_vertexies_excluded;
     double bin_width, bin_width_excluded;
@@ -160,7 +152,7 @@ void faketrack() {
 
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
         tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree, bin_num);
-        tie(reco_z0_excluded, primary_vertexies_excluded, bin_width_excluded) = pv_reco_exclude_highest_bin(tree, bin_num);
+        tie(reco_z0_excluded, primary_vertexies_excluded, bin_width_excluded) = pv_reco_eta(tree, bin_num);
 
         int true_count = 0, false_count = 0;
         for (size_t i = 0; i < reco_z0.size(); ++i) {
@@ -184,7 +176,7 @@ void faketrack() {
         double efficiency_excluded = static_cast<double>(true_count_excluded) / (true_count_excluded + false_count_excluded);
         g2->SetPoint(g2->GetN(), bin_width_excluded, efficiency_excluded);
 
-        cout << "[ttbar] bin width: " << bin_width << ", efficiency: " << efficiency << " (excluded highest pT: " << efficiency_excluded << ")" << endl;
+        cout << "[ttbar] bin width: " << bin_width << ", efficiency: " << efficiency << " (without eta " << efficiency_excluded << ")" << endl;
     }
 
     TCanvas *c1 = new TCanvas("c1", "", 800, 600);
@@ -194,7 +186,7 @@ void faketrack() {
 
     TLegend *legend = new TLegend(0.6, 0.4, 0.8, 0.55);
     legend->AddEntry(g1, "All tracks", "l");
-    legend->AddEntry(g2, "Excluded highest pT", "l");
+    legend->AddEntry(g2, "Excluded eta > 2.5", "l");
     legend->SetBorderSize(0);
     legend->SetTextSize(0.03);
     legend->Draw();
@@ -208,5 +200,5 @@ void faketrack() {
     latex.DrawLatex(0.62, 0.25, "Simulation Internal");
     latex.DrawLatex(0.5, 0.2, "#sqrt{s} = 14 TeV");
 
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/faketrack_comparison.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/exclude_eta25.pdf").c_str());
 }

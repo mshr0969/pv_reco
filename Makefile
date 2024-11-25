@@ -20,8 +20,11 @@ bin_width_pu0to200:
 save_pu200:
 	root -l 'src/efficiency/save_pu200.cpp'
 
-faketrack:
-	root -l 'src/efficiency/bin_width/faketrack.cpp'
+exclude_highest_pt:
+	root -l 'src/efficiency/bin_width/exclude_highest_pt.cpp'
+
+exclude_eta:
+	root -l 'src/efficiency/bin_width/exclude_eta.cpp'
 
 save_run3:
 	root -l 'src/efficiency/save_run3.cpp'
