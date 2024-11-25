@@ -23,8 +23,8 @@ save_pu200:
 exclude_highest_pt:
 	root -l 'src/efficiency/bin_width/exclude_highest_pt.cpp'
 
-exclude_eta:
-	root -l 'src/efficiency/bin_width/exclude_eta.cpp'
+exclude:
+	root -l 'src/efficiency/bin_width/exclude.cpp'
 
 save_run3:
 	root -l 'src/efficiency/save_run3.cpp'

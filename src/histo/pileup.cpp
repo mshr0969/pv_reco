@@ -22,18 +22,20 @@ void pileup() {
 
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
+    vector<double> *id_trk_eta = nullptr;
     vector<int> *vxp_type = nullptr;
     vector<float> *true_vxp_z = nullptr;
 
     tree->SetBranchAddress("id_trk_pt", &id_trk_pt);
     tree->SetBranchAddress("id_trk_z0", &id_trk_z0);
+    tree->SetBranchAddress("id_trk_eta", &id_trk_eta);
     tree->SetBranchAddress("vxp_type", &vxp_type);
     tree->SetBranchAddress("true_vxp_z", &true_vxp_z);
 
     int entries =  tree->GetEntries();
     cout << "Total number of events: " << entries << endl;
 
-    tree->GetEntry(4806);
+    tree->GetEntry(1023);
     string title =  "";
     TH1D *h1 = new TH1D("h1", title.c_str(), 256, -200, 200);
     h1->SetFillColor(kBlue - 10);
@@ -41,6 +43,9 @@ void pileup() {
     std::map<int, double> binValues;
 
     for (size_t i = 0; i < id_trk_pt->size(); i++) {
+        if (abs(id_trk_eta->at(i)) > 3 || id_trk_pt->at(i) < 1000) {
+            continue;
+        }
         int bin = h1->FindBin(id_trk_z0->at(i));
         binValues[bin] += id_trk_pt->at(i);
     }

@@ -72,7 +72,7 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco(TTree *tree, int b
     return make_tuple(reco_z0, primary_vertexies, bin_width);
 }
 
-tuple<vector<vector<double>>, vector<double>, double> pv_reco_eta(TTree *tree, int bin_num) {
+tuple<vector<vector<double>>, vector<double>, double> pv_reco_pt(TTree *tree, int bin_num) {
     vector<double> *id_trk_pt = nullptr;
     vector<float> *id_trk_z0 = nullptr;
     vector<float> *id_trk_eta = nullptr;
@@ -96,7 +96,7 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco_eta(TTree *tree, i
         TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", bin_num, -300, 300);
 
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
-            if (abs(id_trk_eta->at(i)) > 3) {
+            if (id_trk_pt->at(i) < 1000 || abs(id_trk_eta->at(i)) > 3) {
                 continue;
             }
             tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
@@ -124,7 +124,7 @@ tuple<vector<vector<double>>, vector<double>, double> pv_reco_eta(TTree *tree, i
 }
 
 
-void exclude_eta() {
+void exclude() {
     vector<vector<double>> reco_z0, reco_z0_excluded;
     vector<double> primary_vertexies, primary_vertexies_excluded;
     double bin_width, bin_width_excluded;
@@ -152,7 +152,7 @@ void exclude_eta() {
 
     for (int bin_num = min_bin_num; bin_num <= max_bin_num; bin_num *= 2) {
         tie(reco_z0, primary_vertexies, bin_width) = pv_reco(tree, bin_num);
-        tie(reco_z0_excluded, primary_vertexies_excluded, bin_width_excluded) = pv_reco_eta(tree, bin_num);
+        tie(reco_z0_excluded, primary_vertexies_excluded, bin_width_excluded) = pv_reco_pt(tree, bin_num);
 
         int true_count = 0, false_count = 0;
         for (size_t i = 0; i < reco_z0.size(); ++i) {
@@ -176,7 +176,7 @@ void exclude_eta() {
         double efficiency_excluded = static_cast<double>(true_count_excluded) / (true_count_excluded + false_count_excluded);
         g2->SetPoint(g2->GetN(), bin_width_excluded, efficiency_excluded);
 
-        cout << "[ttbar] bin width: " << bin_width << ", efficiency: " << efficiency << " (without eta " << efficiency_excluded << ")" << endl;
+        cout << "[ttbar] bin width: " << bin_width << ", efficiency: " << efficiency << " (exluded " << efficiency_excluded << ")" << endl;
     }
 
     TCanvas *c1 = new TCanvas("c1", "", 800, 600);
@@ -186,7 +186,7 @@ void exclude_eta() {
 
     TLegend *legend = new TLegend(0.6, 0.4, 0.8, 0.55);
     legend->AddEntry(g1, "All tracks", "l");
-    legend->AddEntry(g2, "Excluded eta > 3", "l");
+    legend->AddEntry(g2, "Excluded p_{T} < 2 GeV & eta > 3", "l");
     legend->SetBorderSize(0);
     legend->SetTextSize(0.03);
     legend->Draw();
@@ -200,5 +200,5 @@ void exclude_eta() {
     latex.DrawLatex(0.62, 0.25, "Simulation Internal");
     latex.DrawLatex(0.5, 0.2, "#sqrt{s} = 14 TeV");
 
-    c1->Print((string(basePath) + "/output/" + string(dir) + "/exclude_eta3.pdf").c_str());
+    c1->Print((string(basePath) + "/output/" + string(dir) + "/exclude_pt2.pdf").c_str());
 }

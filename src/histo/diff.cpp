@@ -112,6 +112,7 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
     vector<float> *id_trk_eta = nullptr;
     vector<int> *vxp_type = nullptr;
     vector<float> *vxp_z = nullptr;
+    vector<double> *true_vxp_z = nullptr;
 
     const char* ptBranch = is_ftf ? "ftf_id_trk_pt" : "id_trk_pt";
     const char* z0Branch = is_ftf ? "ftf_id_trk_z0" : "id_trk_z0";
@@ -121,6 +122,7 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
     tree->SetBranchAddress("id_trk_eta", &id_trk_eta);
     tree->SetBranchAddress("vxp_type", &vxp_type);
     tree->SetBranchAddress("vxp_z", &vxp_z);
+    tree->SetBranchAddress("true_vxp_z", &true_vxp_z);
 
     int entries = tree->GetEntries();
 
@@ -151,7 +153,7 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
         TH1D *tempHist = new TH1D("tempHist", "Temporary Histogram", 256, min_z0, max_z0);
 
         for (size_t i = 0; i < id_trk_pt->size(); ++i) {
-            if (id_trk_eta->at(i) > 3) {
+            if (id_trk_pt->at(i) < 1000 || abs(id_trk_eta->at(i)) > 3) {
                 continue;
             }
             tempHist->Fill(id_trk_z0->at(i), id_trk_pt->at(i));
@@ -162,15 +164,15 @@ void drawHist(TTree *tree, bool is_ftf, string outputPath) {
 
         delete tempHist;
 
-        float primary_vertex_z = 0;
-        for (size_t i = 0; i < vxp_z->size(); ++i) {
-            if (vxp_type->at(i) == 1) {
-                primary_vertex_z = vxp_z->at(i);
-                break;
-            }
+        // true_vxp_zの、初めから100個のうち、最も多いものをprimary vertexとする
+        double primary_vertex;
+        vector<double> truth_z;
+        for (size_t i = 0; i < 100; ++i) {
+            truth_z.push_back(true_vxp_z->at(i));
         }
+        primary_vertex = *max_element(truth_z.begin(), truth_z.end());
 
-        double diff = max_z0 - primary_vertex_z;
+        double diff = max_z0 - primary_vertex;
         int track_num = id_trk_pt->size();
         if (track_num > 0) {
             h1->Fill(diff);

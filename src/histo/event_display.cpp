@@ -47,7 +47,7 @@ void event_display() {
     int entries =  tree->GetEntries();
     cout << "Total number of events: " << entries << endl;
 
-    tree->GetEntry(4806);
+    tree->GetEntry(1506);
     string title =  "";
     TH1D *h1 = new TH1D("h1", title.c_str(), 256, -200, 200);
     h1->SetFillColor(kBlue - 10);
@@ -73,6 +73,9 @@ void event_display() {
 
     vector<tuple<double, double, double, double, double>> tracksInMaxBin; // {pT, z0, d0, eta, phi}
     for (size_t i = 0; i < id_trk_pt->size(); i++) {
+        if (abs(id_trk_eta->at(i)) > 3) {
+            continue;
+        }
         if (id_trk_z0->at(i) >= binLowEdge && id_trk_z0->at(i) < binUpEdge) {
             tracksInMaxBin.emplace_back(id_trk_pt->at(i), id_trk_z0->at(i), id_trk_d0->at(i), id_trk_eta->at(i), id_trk_phi->at(i));
         }
